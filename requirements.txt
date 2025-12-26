@@ -1,0 +1,16 @@
+fastapi
+uvicorn
+langchain
+langchain-community
+langchain-aws
+boto3
+pydantic
+python-dotenv
+reportlab
+pymongo
+python-dotenv
+passlib[bcrypt]
+langchain
+langchain-aws
+langchain-google-genai
+python-dotenv
