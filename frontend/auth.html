@@ -1,0 +1,473 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Google Login OAuth -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+
+<!-- Google reCAPTCHA -->
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+<title>Insurance Auth Portal</title>
+
+<style>
+body{
+    margin:0;
+    font-family: Poppins, sans-serif;
+    background: linear-gradient(135deg,#7AC2FF,#C79BFF,#FFB5C5);
+    background-size:300% 300%;
+    animation: bg 8s infinite alternate;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+}
+@keyframes bg{
+    0%{background-position:0% 50%}
+    100%{background-position:100% 50%}
+}
+
+.container{
+    width:850px;
+    max-width:90%;
+    background:rgba(255,255,255,0.2);
+    backdrop-filter:blur(12px);
+    border-radius:20px;
+    padding:30px;
+    color:#333;
+    display:flex;
+    box-shadow:0 0 25px rgba(0,0,0,0.2);
+}
+
+.left,.right{
+    flex:1;
+    padding:20px;
+}
+
+h2{text-align:center;margin-bottom:20px;}
+
+input{
+    width:100%;
+    padding:12px;
+    margin:8px 0;
+    background:rgba(255,255,255,0.5);
+    border:none;
+    border-radius:8px;
+    font-size:14px;
+}
+input:focus{outline:2px solid #6C5CE7;}
+
+button{
+    width:100%;
+    padding:12px;
+    border:none;
+    border-radius:8px;
+    font-size:15px;
+    background:#6C5CE7;
+    color:#fff;
+    cursor:pointer;
+    transition:.3s;
+}
+button:hover{background:#4834D4;}
+
+.toggle{
+    text-align:center;
+    margin-top:10px;
+    font-weight:bold;
+    cursor:pointer;
+    color:#2C3A47;
+}
+.toggle:hover{color:#000;}
+
+.password-box{
+    position:relative;
+}
+.eye{
+    position:absolute;
+    right:12px;
+    top:14px;
+    cursor:pointer;
+}
+
+.google-btn{
+    background:#fff;
+    color:#555;
+    border:1px solid #ddd;
+    margin-top:10px;
+}
+.google-btn:hover{background:#f3f3f3;}
+
+.forgot{text-align:right;margin:5px 0;font-size:13px;color:#0652DD;cursor:pointer;}
+.forgot:hover{text-decoration:underline;}
+
+.hidden{display:none;}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<!-- LOGIN PANEL -->
+<div class="left" id="loginBox">
+    <h2>Login</h2>
+
+    <input type="text" id="loginUser" placeholder=" Enter yourEmail">
+
+    <div class="password-box">
+        <input type="password" id="loginPass" placeholder="Enter your Password">
+        <span class="eye" onclick="toggle('loginPass')">👁</span>
+    </div>
+
+    <!-- Google reCAPTCHA -->
+    <div class="g-recaptcha" data-sitekey="6LdxN8orAAAAAK_nUskDJoJbpyP3U2F23QqPh0Z-"></div>
+
+    <button onclick="login()">Login</button>
+
+    <p style="text-align:center;margin-top:10px;font-weight:bold;color:#444;">OR</p>
+
+    <!-- Google Sign-In Button UI Holder -->
+    <div id="googleBtn" style="text-align:center;margin-top:10px;"></div>
+
+    <div class="forgot" onclick="showReset()">Forgot Password?</div>
+    <div class="toggle" onclick="showSignup()">Don’t have an account? Sign up</div>
+</div>
+
+<!-- SIGNUP PANEL -->
+<div class="right hidden" id="signupBox">
+    <h2>Create Account</h2>
+    <input type="text" id="name" placeholder="Full Name">
+    <input type="email" id="email" placeholder="Email">
+
+    <div class="password-box">
+        <input type="password" id="pass1" placeholder="Create Password">
+        <span class="eye" onclick="toggle('pass1')">👁</span>
+    </div>
+
+    <div class="password-box">
+        <input type="password" id="pass2" placeholder="Confirm Password">
+        <span class="eye" onclick="toggle('pass2')">👁</span>
+    </div>
+
+    <button onclick="signup()">Sign Up</button>
+    <div class="toggle" onclick="showLogin()">Already have an account? Login</div>
+</div>
+
+<!-- RESET BOX -->
+<div class="right hidden" id="resetBox">
+    <h2>Reset Password</h2>
+
+    <!-- Step 1: Enter Email -->
+    <input type="email" id="resetEmail" placeholder="Enter your Email">
+
+    <button onclick="sendReset()">Send OTP</button>
+
+    <!-- Step 2: OTP + New Password (Hidden until email sent) -->
+    <div id="otpSection" class="hidden" style="margin-top:15px;">
+        <input type="text" id="otp" placeholder="Enter OTP">
+
+        <div class="password-box">
+            <input type="password" id="newPass" placeholder="New Password">
+            <span class="eye" onclick="toggle('newPass')">👁</span>
+        </div>
+
+        <button onclick="confirmReset()">Reset Password</button>
+    </div>
+
+    <div class="toggle" onclick="showLogin()">Back to Login</div>
+</div>
+
+<script>
+
+/* ================= TOGGLE PASSWORD ================= */
+function toggle(id){
+    const input = document.getElementById(id);
+    input.type = input.type === "password" ? "text" : "password";
+}
+
+/* ================= SWITCH TO SIGNUP ================= */
+function showSignup(){
+
+    document.getElementById("loginBox").style.display = "none";
+    document.getElementById("signupBox").style.display = "block";
+    document.getElementById("resetBox").style.display = "none";
+
+}
+
+/* ================= SWITCH TO LOGIN ================= */
+function showLogin(){
+
+    document.getElementById("signupBox").style.display = "none";
+    document.getElementById("resetBox").style.display = "none";
+    document.getElementById("loginBox").style.display = "block";
+
+}
+/* ================= LOGIN ================= */
+async function login(){
+
+    const identifier = document.getElementById("loginUser").value.trim();
+    const password = document.getElementById("loginPass").value;
+
+    if(!identifier || !password){
+        alert("Enter email/username and password");
+        return;
+    }
+
+    try{
+
+        const formData = new URLSearchParams();
+        formData.append("username", identifier);
+        formData.append("password", password);
+
+        const res = await fetch("http://127.0.0.1:8000/api/auth/login",{
+
+            method:"POST",
+
+            headers:{
+                "Content-Type":"application/x-www-form-urlencoded"
+            },
+
+            body: formData
+
+        });
+
+        const data = await res.json();
+
+        console.log("Login response:", data);
+
+        // ✅ Check backend error first
+        if(!res.ok){
+
+            alert("❌ " + (data.detail || data.message || "Login failed"));
+            return;
+
+        }
+
+        // ✅ Ensure token exists
+        if(!data.access_token){
+
+            alert("❌ Login failed: No token received");
+            return;
+
+        }
+
+        // ✅ Save token
+        localStorage.setItem("token", data.access_token);
+
+        // optional debug info
+        console.log("Token saved successfully");
+
+        // ✅ Redirect to dashboard (role handled there)
+        window.location.href = "/frontend/dashboard.html";
+
+    }
+    catch(error){
+
+        console.error("Login error:", error);
+
+        alert("❌ Cannot connect to server");
+
+    }
+
+}
+
+/* ================= SIGNUP ================= */
+async function signup(){
+
+    const fullname = document.getElementById("name").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("pass1").value;
+    const confirmPassword = document.getElementById("pass2").value;
+
+    // validation
+    if(!fullname || !email || !password || !confirmPassword){
+        alert("Please fill all fields");
+        return;
+    }
+
+    if(password !== confirmPassword){
+        alert("Passwords do not match");
+        return;
+    }
+
+    try{
+
+        // send exactly what backend expects
+        const payload = {
+            username: email,      // backend needs username
+            email: email,
+            fullname: fullname,
+            password: password
+        };
+
+        const res = await fetch("http://127.0.0.1:8000/api/auth/signup", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+
+        console.log("Signup response:", data);
+
+        if(res.ok){
+
+            // safe alert
+            alert(
+                "✅ " + (data.message || "User created successfully") +
+                "\nRole: " + (data.assigned_role || "user")
+            );
+
+            showLogin();
+
+        }else{
+
+            alert(
+                "❌ " + (
+                    data.detail ||
+                    data.message ||
+                    "Signup failed"
+                )
+            );
+
+        }
+
+    }
+    catch(err){
+
+        console.error(err);
+
+        alert("❌ Cannot connect to server");
+
+    }
+}
+/* ================= GOOGLE LOGIN ================= */
+function handleGoogleLogin(response){
+
+    if(!response || !response.credential){
+
+        alert("❌ Google authentication failed");
+        return;
+
+    }
+
+    fetch("http://127.0.0.1:8000/api/auth/google-login",{
+
+        method:"POST",
+
+        headers:{
+            "Content-Type":"application/json"
+        },
+
+        body: JSON.stringify({
+            token: response.credential
+        })
+
+    })
+    .then(async res => {
+
+        let data;
+
+        try{
+            data = await res.json();
+        }
+        catch{
+            alert(" Invalid server response");
+            return;
+        }
+
+        console.log("Google login response:", data);
+
+        // handle backend error
+        if(!res.ok){
+
+            alert("❌ " + (data.detail || data.message || "Google login failed"));
+            return;
+
+        }
+
+        //  ensure token exists
+        if(!data.access_token){
+
+            alert("❌ Login failed: No token received");
+            return;
+
+        }
+
+        //  save token for dashboard authentication
+        localStorage.setItem("token", data.access_token);
+
+        console.log("Token saved successfully");
+
+        // optional success message
+        alert(" Login successful");
+
+        //  redirect to single dashboard
+        window.location.href = "/frontend/dashboard.html";
+
+    })
+    .catch(err => {
+
+        console.error("Google login error:", err);
+
+        alert("❌ Cannot connect to server");
+
+    });
+
+}
+
+/* ================= LOAD GOOGLE SSO ================= */
+async function loadGoogleSSO(){
+
+    try{
+
+        const res = await fetch("http://127.0.0.1:8000/api/auth/google-client");
+
+        const data = await res.json();
+
+        google.accounts.id.initialize({
+
+            client_id: data.client_id,
+
+            callback: handleGoogleLogin
+
+        });
+
+        google.accounts.id.renderButton(
+
+            document.getElementById("googleBtn"),
+
+            {
+                theme:"outline",
+                size:"large"
+            }
+
+        );
+
+    }catch(error){
+
+        console.error("Google SSO load error", error);
+
+    }
+
+}
+window.addEventListener("load", () => {
+
+    const token = localStorage.getItem("token");
+
+    if(token){
+        window.location.href = "/frontend/dashboard.html";
+        return;
+    }
+
+    loadGoogleSSO();
+
+});
+/* ================= INITIALIZE ================= */
+window.addEventListener("load", loadGoogleSSO);
+
+</script>
+</body>
+</html>

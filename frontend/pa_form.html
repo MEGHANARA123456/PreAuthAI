@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Medicare Prior Authorization Form</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<style>
+:root {
+  --primary:#0F3C88;
+  --primary-light:#E8F0FF;
+  --border:#CBD5E1;
+  --bg:#F8FAFC;
+  --card:#FFFFFF;
+  --text:#1E293B;
+  --muted:#64748B;
+}
+
+* { box-sizing:border-box; font-family:system-ui, sans-serif; }
+
+body { margin:0; background:var(--bg); color:var(--text); }
+
+.page { display:flex; justify-content:center; padding:40px 16px; }
+
+.card {
+  width:100%;
+  max-width:950px;
+  background:var(--card);
+  border-radius:12px;
+  box-shadow:0 10px 30px rgba(0,0,0,.08);
+  padding:32px;
+}
+
+h1 { margin-top:0; }
+
+.section { margin-bottom:28px; }
+
+.section-header {
+  background:var(--primary);
+  color:#fff;
+  padding:12px 16px;
+  border-radius:6px;
+  font-weight:600;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  cursor:pointer;
+}
+
+.section-body { padding-top:16px; }
+
+.grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:16px;
+}
+
+label { font-size:13px; color:var(--muted); display:block; margin-bottom:4px; }
+
+input, textarea, select {
+  width:100%;
+  padding:10px 12px;
+  border:1px solid var(--border);
+  border-radius:6px;
+}
+
+textarea { min-height:90px; }
+
+.radio-group, .checkbox-group {
+  display:flex;
+  gap:18px;
+  margin-top:6px;
+}
+
+.upload-box {
+  border:2px dashed var(--border);
+  border-radius:8px;
+  padding:24px;
+  text-align:center;
+  color:var(--muted);
+}
+
+.actions {
+  display:flex;
+  justify-content:center;
+  margin-top:32px;
+}
+
+button {
+  background:var(--primary);
+  color:#fff;
+  border:none;
+  padding:14px 36px;
+  border-radius:8px;
+  font-size:16px;
+  cursor:pointer;
+}
+
+button.secondary {
+  background:#E5EDFF;
+  color:#0F3C88;
+}
+
+.signature-box {
+  border:1px solid var(--border);
+  border-radius:6px;
+  padding:12px;
+  text-align:center;
+}
+
+canvas {
+  border:1px dashed var(--border);
+  border-radius:6px;
+}
+
+.hidden { display:none; }
+</style>
+</head>
+
+<body>
+<div class="page">
+<div class="card">
+
+<h1> Prior Authorization Form</h1>
+
+<!-- ================= LLM AUTO-FILL ================= -->
+<div class="section">
+<div class="section-header">Clinical Notes (AI Auto-Fill)</div>
+<div class="section-body">
+<textarea id="clinicalNotes" placeholder="Paste physician clinical notes here..."></textarea>
+<br><br>
+<button class="secondary" onclick="autoFillFromLLM()">Auto-Fill Using AI</button>
+</div>
+</div>
+
+<!-- ================= PATIENT INFO ================= -->
+<div class="section">
+<div class="section-header" onclick="toggle(this)">Patient Information ⌄</div>
+<div class="section-body">
+<div class="grid">
+<input id="fname" placeholder="First Name">
+<input id="lname" placeholder="Last Name">
+<input type="date">
+<input placeholder="Phone Number">
+<input placeholder="Email">
+<input placeholder="Member ID">
+</div>
+
+<label>Address</label>
+<input placeholder="Street Address">
+<input placeholder="Street Address Line 2">
+<div class="grid">
+<input placeholder="City">
+<input placeholder="State / Province">
+<input placeholder="Postal / Zip Code">
+</div>
+
+<label>Sex</label>
+<div class="radio-group">
+<label><input type="radio" name="sex"> Female</label>
+<label><input type="radio" name="sex"> Male</label>
+<label><input type="radio" name="sex"> Other</label>
+</div>
+</div>
+</div>
+
+<!-- ================= PRESCRIBER ================= -->
+<div class="section">
+<div class="section-header" onclick="toggle(this)">Prescriber Information ⌄</div>
+<div class="section-body">
+<div class="grid">
+<input placeholder="Prescriber First Name">
+<input placeholder="Prescriber Last Name">
+<input placeholder="NPI Number">
+<input placeholder="Office Phone">
+<input placeholder="Office Fax">
+</div>
+</div>
+</div>
+
+<!-- ================= MEDICAL INFO ================= -->
+<div class="section">
+<div class="section-header" onclick="toggle(this)">Medical Information ⌄</div>
+<div class="section-body">
+<input id="medication" placeholder="Medication">
+<textarea id="strength" placeholder="Strength & Route of Administration"></textarea>
+<input id="frequency" placeholder="Frequency">
+
+<label>Is this a new prescription?</label>
+<div class="radio-group">
+<label><input type="radio" name="newrx"> Yes</label>
+<label><input type="radio" name="newrx"> No</label>
+</div>
+
+<div class="grid">
+<input type="date">
+<input placeholder="Expected Length of Therapy">
+<input placeholder="Quantity">
+<input placeholder="Height / Weight">
+<input placeholder="Drug Allergies">
+</div>
+
+<textarea id="diagnosis" placeholder="Diagnosis / ICD-10 Codes"></textarea>
+<input id="cpt" placeholder="CPT / HCPCS Codes">
+</div>
+</div>
+
+<!-- ================= MEDICAL NECESSITY ================= -->
+<div class="section">
+<div class="section-header" onclick="toggle(this)">Clinical Information / Medical Necessity ⌄</div>
+<div class="section-body">
+<label>Clinical History</label>
+<textarea id="history"></textarea>
+
+<label>Failed Treatments</label>
+<textarea id="failed"></textarea>
+
+<label>Urgency</label>
+<div class="radio-group">
+<label><input type="radio" name="urgency"> Standard</label>
+<label><input type="radio" name="urgency"> Urgent</label>
+</div>
+</div>
+</div>
+
+<!-- ================= RATIONALE ================= -->
+<div class="section">
+<div class="section-header" onclick="toggle(this)">Rationale for Exception Request ⌄</div>
+<div class="section-body">
+<div class="checkbox-group">
+<label><input type="checkbox"> Adverse outcome with alternatives</label>
+<label><input type="checkbox"> Complex chronic condition</label>
+<label><input type="checkbox"> Higher dosage required</label>
+<label><input type="checkbox"> Formulary exception</label>
+<label><input type="checkbox"> Other</label>
+</div>
+<textarea placeholder="Explain in detail"></textarea>
+</div>
+</div>
+
+<!-- ================= DOCUMENTS ================= -->
+<div class="section">
+<div class="section-header" onclick="toggle(this)">Upload Supporting Documents ⌄</div>
+<div class="section-body">
+<div class="upload-box">Browse Files or Drag & Drop</div>
+</div>
+</div>
+
+<!-- ================= EXPEDITED ================= -->
+<div class="section">
+<div class="section-header" onclick="toggle(this)">Request for Expedited Review ⌄</div>
+<div class="section-body">
+<div class="checkbox-group">
+<label><input type="checkbox"> Expedited review (24 hours)</label>
+<label><input type="checkbox"> Other</label>
+</div>
+
+<label>Date</label>
+<input type="date">
+
+<label>Signature</label>
+<div class="signature-box">
+<canvas id="sig" width="400" height="120"></canvas><br>
+<button onclick="clearSig()" type="button">Clear</button>
+</div>
+</div>
+</div>
+
+<div class="actions">
+<button onclick="submitForm()">Submit</button>
+</div>
+
+</div>
+</div>
+
+<script>
+function toggle(h){ h.nextElementSibling.classList.toggle("hidden"); }
+
+/* ===== MOCK LLM AUTO-FILL ===== */
+function autoFillFromLLM(){
+  // This simulates LLM output
+  const aiData = {
+    medication:"Atorvastatin",
+    frequency:"Once daily",
+    diagnosis:"E78.5 - Hyperlipidemia",
+    history:"Patient has elevated LDL despite lifestyle modifications.",
+    failed:"Diet and exercise trial for 6 months",
+    cpt:"99213"
+  };
+
+  medication.value = aiData.medication;
+  frequency.value = aiData.frequency;
+  diagnosis.value = aiData.diagnosis;
+  history.value = aiData.history;
+  failed.value = aiData.failed;
+  cpt.value = aiData.cpt;
+
+  alert("AI auto-fill completed");
+}
+
+function submitForm(){
+  alert("Prior Authorization Submitted Successfully");
+}
+
+/* ===== Signature ===== */
+const canvas = document.getElementById("sig");
+const ctx = canvas.getContext("2d");
+let drawing=false;
+
+canvas.onmousedown=()=>drawing=true;
+canvas.onmouseup=()=>drawing=false;
+canvas.onmousemove=e=>{
+  if(!drawing)return;
+  ctx.lineWidth=2;
+  ctx.lineTo(e.offsetX,e.offsetY);
+  ctx.stroke();
+};
+
+function clearSig(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+}
+</script>
+
+</body>
+</html>

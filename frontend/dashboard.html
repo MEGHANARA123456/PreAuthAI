@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prior Authorization Dashboard</title>
+
+<style>
+/* ---------------- Global ---------------- */
+body{margin:0;font-family:Poppins, sans-serif;background:#F6FBFF;color:#333;}
+.hidden{display:none;}
+
+/* ---------------- Navbar ---------------- */
+.top-nav{display:flex;justify-content:space-between;align-items:center;
+background:#007BFF;padding:15px 40px;color:white;}
+.logo{font-size:20px;font-weight:600;}
+.top-nav nav a{color:white;text-decoration:none;margin:0 12px;font-weight:500;}
+.top-nav nav a:hover,.active{text-decoration:underline;}
+
+/* ---------------- Hero Section ---------------- */
+.hero{display:flex;align-items:center;padding:55px;background:linear-gradient(to right,#E9F6FF,#D8EFFF);}
+.hero h1{font-size:36px;margin:0 0 10px;}
+.hero button{margin-top:20px;padding:12px 20px;border:none;border-radius:6px;
+background:#007BFF;color:white;font-size:16px;cursor:pointer;}
+.hero button:hover{background:#005FCC;}
+.hero img{width:330px;margin-left:auto;}
+
+/* ---------------- Panels ---------------- */
+.panel{padding:25px;margin:20px auto;background:white;border-radius:10px;width:92%;
+box-shadow:0 4px 15px rgba(0,0,0,.1);}
+
+#adminPanel button,#managerPanel button{
+padding:10px;margin:6px;border:none;
+background:#005FCC;color:white;border-radius:5px;cursor:pointer;
+}
+#adminPanel button:hover,#managerPanel button:hover{background:#003F9E;}
+
+#logBox{
+background:#F1F6FF;
+padding:10px;
+margin-top:10px;
+border-radius:5px;
+height:120px;
+overflow-y:auto;
+font-size:13px;
+}
+
+/* ---------------- Analytics ---------------- */
+.analytics{
+display:flex;
+gap:15px;
+flex-wrap:wrap;
+margin-top:15px;
+}
+.stat{
+background:#E9F3FF;
+padding:16px;
+border-radius:10px;
+width:200px;
+text-align:center;
+font-weight:600;
+}
+
+/* ---------------- Cards ---------------- */
+.benefits{text-align:center;margin-top:40px;}
+.cards{display:flex;gap:15px;flex-wrap:wrap;justify-content:center;padding:25px;}
+.card{background:#fff;padding:18px;border-radius:12px;width:230px;
+box-shadow:0 4px 14px rgba(0,0,0,.08);text-align:center;}
+
+/* ---------------- Footer ---------------- */
+footer{margin-top:40px;background:#007BFF;color:white;text-align:center;padding:12px;}
+</style>
+</head>
+
+<body>
+
+<!--================= Navbar =================-->
+<header class="top-nav">
+  <div class="logo">🩺 Prior Authorization Portal</div>
+  <nav>
+    <a class="active">Dashboard</a>
+    <a href="pa_form.html">Create PA</a>
+    <a href="pa_list.html">My Forms</a>
+    <a href="#" onclick="logout()">Logout</a>
+  </nav>
+</header>
+
+<!--================= Hero =================-->
+<section class="hero">
+  <div>
+    <h1>Welcome <span id="username">User</span> 👋</h1>
+    <p>Your role: <b id="roleText"></b></p>
+    <button onclick="location.href='pa_form.html'">➕ New PA Request</button>
+  </div>
+  <img src="https://cdn-icons-png.flaticon.com/512/5234/5234315.png">
+</section>
+
+<!--================= USER PANEL =================-->
+<div id="userPanel" class="panel">
+  <h2>User Panel</h2>
+  <p>You can upload SOAP notes & generate PA forms.</p>
+</div>
+
+<!--================= MANAGER PANEL =================-->
+<div id="managerPanel" class="panel hidden">
+  <h2>Manager Panel</h2>
+  <button onclick="location.href='pa_form.html'">📄 Create / Edit PA Forms</button>
+  <button onclick="location.href='pdf_viewer.html'">📥 Download Approved Forms</button>
+</div>
+
+<!--================= ADMIN PANEL =================-->
+<div id="adminPanel" class="panel hidden">
+
+  <h2>🛠 Admin Dashboard </h2>
+
+  <!-- Analytics -->
+  <div class="analytics">
+    <div class="stat">👥 Users<br><span id="statUsers">—</span></div>
+    <div class="stat">📄 PA Requests<br><span id="statPA">—</span></div>
+    <div class="stat">✅ Approved<br><span id="statApproved">—</span></div>
+  </div>
+
+  <button onclick="loadLogs()">📜 View Login Logs</button>
+
+  <div id="logBox">Admin logs will appear here…</div>
+
+  <!-- SESSION MONITOR -->
+  <h3 style="margin-top:20px;">🟢 Live User Sessions</h3>
+
+  <button onclick="loadSessions()" style="
+    padding:8px 15px;
+    background:#28a745;
+    color:white;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
+    margin-bottom:10px;">
+    🔄 Refresh Sessions
+  </button>
+
+  <table style="width:100%; border-collapse:collapse;">
+    <thead>
+      <tr style="background:#007BFF;color:white;">
+        <th style="padding:8px;">User</th>
+        <th>Role</th>
+        <th>IP</th>
+        <th>Device</th>
+        <th>Login Time</th>
+        <th>Status</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+
+    <tbody id="sessionTableBody"></tbody>
+
+  </table>
+
+</div>
+
+<!--================= Benefits =================-->
+<section class="benefits">
+  <h2>Insurance Benefits</h2>
+  <div class="cards">
+    <div class="card">💰 Cost Saving</div>
+    <div class="card">🤖 AI Auto-Fill PA</div>
+    <div class="card">📄 Export PDF</div>
+    <div class="card">⏳ Track Status</div>
+  </div>
+</section>
+
+<footer>© 2026 Prior Authorization System | Medical AI Assistant</footer>
+
+<!--================= SCRIPT =================-->
+<script>
+// ================= INIT DASHBOARD =================
+async function initDashboard(){
+
+    const token = localStorage.getItem("token");
+
+    if(!token){
+        window.location.href="auth.html";
+        return;
+    }
+
+    try{
+
+        const res = await fetch("http://127.0.0.1:8000/api/auth/me",{
+            headers:{
+                Authorization:`Bearer ${token}`
+            }
+        });
+
+        if(!res.ok){
+            logout();
+            return;
+        }
+
+        const user = await res.json();
+
+        const role = user.role;
+
+        document.getElementById("username").innerText = user.email;
+        document.getElementById("roleText").innerText = role.toUpperCase();
+
+        // hide all panels
+        adminPanel.classList.add("hidden");
+        managerPanel.classList.add("hidden");
+        userPanel.classList.add("hidden");
+
+        if(role === "admin"){
+
+            adminPanel.classList.remove("hidden");
+
+            loadAnalytics();
+            loadLogs();
+            loadSessions();
+
+        }
+        else if(role === "manager"){
+            managerPanel.classList.remove("hidden");
+        }
+        else{
+            userPanel.classList.remove("hidden");
+        }
+
+    }
+    catch{
+        logout();
+    }
+
+}
+
+// ================= LOAD ANALYTICS =================
+async function loadAnalytics(){
+
+    const token = localStorage.getItem("token");
+
+    const res = await fetch(
+        "http://127.0.0.1:8000/api/analytics/stats",
+        {
+            headers:{
+                Authorization:`Bearer ${token}`
+            }
+        }
+    );
+
+    if(!res.ok) return;
+
+    const data = await res.json();
+
+    statUsers.innerText = data.users;
+    statPA.innerText = data.pa_forms;
+    statApproved.innerText = data.approved;
+
+}
+
+// ================= LOAD LOGS =================
+async function loadLogs(){
+
+    const token = localStorage.getItem("token");
+
+    const res = await fetch(
+        "http://127.0.0.1:8000/api/analytics/logs",
+        {
+            headers:{
+                Authorization:`Bearer ${token}`
+            }
+        }
+    );
+
+    if(!res.ok) return;
+
+    const logs = await res.json();
+
+    logBox.innerHTML="";
+
+    logs.forEach(log=>{
+        logBox.innerHTML += `
+        <div>
+        🧾 ${log.message}
+        </div>`;
+    });
+
+}
+
+// ================= LOAD SESSIONS =================
+async function loadSessions(){
+
+    const token = localStorage.getItem("token");
+
+    const res = await fetch(
+        "http://127.0.0.1:8000/api/auth/sessions",
+        {
+            headers:{
+                Authorization:`Bearer ${token}`
+            }
+        }
+    );
+
+    if(!res.ok) return;
+
+    const sessions = await res.json();
+
+    sessionTableBody.innerHTML="";
+
+    sessions.forEach(session=>{
+
+        sessionTableBody.innerHTML += `
+
+        <tr>
+
+        <td>${session.email}</td>
+
+        <td>${session.role}</td>
+
+        <td>${session.ip || "-"}</td>
+
+        <td>${session.user_agent?.substring(0,25) || "-"}</td>
+
+        <td>
+        ${new Date(session.login_time).toLocaleString()}
+        </td>
+
+        <td style="color:green;">
+        ${session.status}
+        </td>
+
+        <td>
+        <button onclick="forceLogout('${session.session_id}')"
+        style="
+        background:red;
+        color:white;
+        border:none;
+        padding:5px 10px;
+        border-radius:5px;">
+        Force Logout
+        </button>
+        </td>
+
+        </tr>
+
+        `;
+
+    });
+
+}
+
+// ================= FORCE LOGOUT =================
+async function forceLogout(session_id){
+
+    const token = localStorage.getItem("token");
+
+    if(!confirm("Force logout session?")) return;
+
+    await fetch(
+        `http://127.0.0.1:8000/api/auth/sessions/force-logout/${session_id}`,
+        {
+            method:"POST",
+            headers:{
+                Authorization:`Bearer ${token}`
+            }
+        }
+    );
+
+    loadSessions();
+
+}
+
+// ================= LOGOUT =================
+async function logout(){
+
+    const token = localStorage.getItem("token");
+
+    await fetch(
+        "http://127.0.0.1:8000/api/auth/logout",
+        {
+            method:"POST",
+            headers:{
+                Authorization:`Bearer ${token}`
+            }
+        }
+    );
+
+    localStorage.clear();
+
+    window.location.href="auth.html";
+
+}
+
+// auto refresh sessions every 10 seconds
+setInterval(()=>{
+    if(roleText.innerText === "ADMIN"){
+        loadSessions();
+    }
+},10000);
+
+// start
+window.onload = initDashboard;
+
+</script>
+
+</body>
+</html>

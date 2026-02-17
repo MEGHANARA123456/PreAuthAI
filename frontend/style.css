@@ -1,0 +1,33 @@
+/* Background updated to medical theme */
+.login-bg{
+    background: url("https://img.freepik.com/free-vector/medical-healthcare-background_1017-26807.jpg") no-repeat center/cover;
+    height:100vh; display:flex; justify-content:center; align-items:center;
+    backdrop-filter: blur(3px);
+}
+
+.glass{
+    width:350px; padding:30px; border-radius:15px;
+    background: rgba(255,255,255,0.18);
+    box-shadow:0 8px 30px rgba(0,0,0,.2);
+    border:1px solid rgba(255,255,255,.4);
+    text-align:center; color:white;
+}
+
+.input-group input{
+    width:90%; padding:10px; margin:10px auto; border-radius:6px;
+    border:none; outline:none; font-size:15px;
+}
+
+button{
+    width:90%; padding:12px; background:#00c3ff;
+    border:none;border-radius:6px; color:white; font-size:16px;
+    cursor:pointer; margin-top:10px;
+}
+
+.password-field{position:relative;}
+.toggle-eye{
+    position:absolute; right:40px; top:22px; cursor:pointer;
+}
+
+.links a{color:#fff;font-size:13px;}
+.links{margin-top:10px;}
