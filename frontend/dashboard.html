@@ -60,6 +60,25 @@ width:200px;
 text-align:center;
 font-weight:600;
 }
+.stat span{
+font-size:28px;
+font-weight:700;
+color:#007BFF;
+display:block;
+margin-top:6px;
+}
+
+/* ---------------- Live dot ---------------- */
+.live-dot{
+display:inline-block;
+width:9px;height:9px;border-radius:50%;
+background:#28a745;margin-right:6px;
+animation:pulse 2s infinite;
+}
+@keyframes pulse{
+0%,100%{box-shadow:0 0 0 0 rgba(40,167,69,.5);}
+50%{box-shadow:0 0 0 6px rgba(40,167,69,0);}
+}
 
 /* ---------------- Cards ---------------- */
 .benefits{text-align:center;margin-top:40px;}
@@ -69,6 +88,9 @@ box-shadow:0 4px 14px rgba(0,0,0,.08);text-align:center;}
 
 /* ---------------- Footer ---------------- */
 footer{margin-top:40px;background:#007BFF;color:white;text-align:center;padding:12px;}
+
+/* ---------------- Error text ---------------- */
+.err{color:red;font-size:13px;padding:8px;}
 </style>
 </head>
 
@@ -80,7 +102,8 @@ footer{margin-top:40px;background:#007BFF;color:white;text-align:center;padding:
   <nav>
     <a class="active">Dashboard</a>
     <a href="pa_form.html">Create PA</a>
-    <a href="pa_list.html">My Forms</a>
+    <a href="pdf_viewer.html">Forms pdf</a>
+
     <a href="#" onclick="logout()">Logout</a>
   </nav>
 </header>
@@ -98,7 +121,7 @@ footer{margin-top:40px;background:#007BFF;color:white;text-align:center;padding:
 <!--================= USER PANEL =================-->
 <div id="userPanel" class="panel">
   <h2>User Panel</h2>
-  <p>You can upload SOAP notes & generate PA forms.</p>
+  <p>You can upload SOAP notes &amp; generate PA forms.</p>
 </div>
 
 <!--================= MANAGER PANEL =================-->
@@ -106,36 +129,113 @@ footer{margin-top:40px;background:#007BFF;color:white;text-align:center;padding:
   <h2>Manager Panel</h2>
   <button onclick="location.href='pa_form.html'">📄 Create / Edit PA Forms</button>
   <button onclick="location.href='pdf_viewer.html'">📥 Download Approved Forms</button>
+  <button onclick="location.href='manager_pa_list.html'">📥 View All PA Forms</button>
 </div>
 
 <!--================= ADMIN PANEL =================-->
 <div id="adminPanel" class="panel hidden">
 
-  <h2>🛠 Admin Dashboard </h2>
+  <h2>🛠 Admin Dashboard</h2>
 
-  <!-- Analytics -->
+  <!-- ================= ANALYTICS ================= -->
   <div class="analytics">
-    <div class="stat">👥 Users<br><span id="statUsers">—</span></div>
-    <div class="stat">📄 PA Requests<br><span id="statPA">—</span></div>
-    <div class="stat">✅ Approved<br><span id="statApproved">—</span></div>
+
+    <div class="stat">
+      👥 Users
+      <span id="statUsers">—</span>
+    </div>
+
+    <div class="stat">
+      📄 PA Requests
+      <span id="statPA">—</span>
+    </div>
+
+    <div class="stat">
+      ✅ Approved
+      <span id="statApproved">—</span>
+    </div>
+
+    <!-- NEW: live session count stat -->
+    <div class="stat">
+      🟢 Live Sessions
+      <span id="statSessions">—</span>
+    </div>
+
   </div>
 
-  <button onclick="loadLogs()">📜 View Login Logs</button>
 
-  <div id="logBox">Admin logs will appear here…</div>
+  <!-- ================= USERS TABLE ================= -->
+  <h3 style="margin-top:25px;">👥 Users</h3>
 
-  <!-- SESSION MONITOR -->
-  <h3 style="margin-top:20px;">🟢 Live User Sessions</h3>
+  <button onclick="loadUsers()" style="
+      padding:8px 15px;
+      background:#007BFF;
+      color:white;
+      border:none;
+      border-radius:6px;
+      cursor:pointer;
+      margin-bottom:10px;">
+      🔄 Refresh Users
+  </button>
+
+  <table style="width:100%; border-collapse:collapse; margin-bottom:20px;">
+    <thead>
+      <tr style="background:#007BFF;color:white;">
+        <th style="padding:8px;">Email</th>
+        <th>Username</th>
+        <th>Role</th>
+        <th>Created</th>
+      </tr>
+    </thead>
+    <tbody id="usersTable">
+      <tr><td colspan="4" style="padding:10px;color:#888;">Loading…</td></tr>
+    </tbody>
+  </table>
+
+
+  <!-- ================= LOGIN LOGS ================= -->
+  <h3>📜 Login Logs
+    <span style="font-size:12px;font-weight:400;color:#888;margin-left:8px;">auto-refreshes every 30s</span>
+  </h3>
+
+  <button onclick="loadLogs()" style="
+      padding:8px 15px;
+      background:#6c757d;
+      color:white;
+      border:none;
+      border-radius:6px;
+      cursor:pointer;
+      margin-bottom:10px;">
+      🔄 Refresh Logs
+  </button>
+
+  <div id="logBox" style="
+      background:#F1F6FF;
+      padding:10px;
+      border-radius:5px;
+      height:150px;
+      overflow-y:auto;
+      margin-bottom:20px;
+      font-size:13px;">
+      Fetching logs…
+  </div>
+
+
+  <!-- ================= SESSION MONITOR ================= -->
+  <h3>
+    <span class="live-dot"></span>Live User Sessions
+    <span style="font-size:12px;font-weight:400;color:#888;margin-left:8px;">auto-refreshes every 5s</span>
+  </h3>
 
   <button onclick="loadSessions()" style="
-    padding:8px 15px;
-    background:#28a745;
-    color:white;
-    border:none;
-    border-radius:6px;
-    cursor:pointer;
-    margin-bottom:10px;">
-    🔄 Refresh Sessions
+      padding:8px 15px;
+      background:#28a745;
+      color:white;
+      border:none;
+      border-radius:6px;
+      cursor:pointer;
+      margin-bottom:10px;">
+      🔄 Refresh Sessions
   </button>
 
   <table style="width:100%; border-collapse:collapse;">
@@ -150,9 +250,9 @@ footer{margin-top:40px;background:#007BFF;color:white;text-align:center;padding:
         <th>Action</th>
       </tr>
     </thead>
-
-    <tbody id="sessionTableBody"></tbody>
-
+    <tbody id="sessionTableBody">
+      <tr><td colspan="7" style="padding:10px;color:#888;">Loading…</td></tr>
+    </tbody>
   </table>
 
 </div>
@@ -170,39 +270,43 @@ footer{margin-top:40px;background:#007BFF;color:white;text-align:center;padding:
 
 <footer>© 2026 Prior Authorization System | Medical AI Assistant</footer>
 
-<!--================= SCRIPT =================-->
 <script>
+
+const API = "http://127.0.0.1:8000";
+
 // ================= INIT DASHBOARD =================
 async function initDashboard(){
 
     const token = localStorage.getItem("token");
 
     if(!token){
-        window.location.href="auth.html";
+        window.location.href = "auth.html";
         return;
     }
 
     try{
 
-        const res = await fetch("http://127.0.0.1:8000/api/auth/me",{
-            headers:{
-                Authorization:`Bearer ${token}`
-            }
-        });
+        const res = await fetch(
+            `${API}/api/auth/me`,
+            { headers:{ Authorization:`Bearer ${token}` } }
+        );
 
         if(!res.ok){
-            logout();
+            localStorage.removeItem("token");
+            window.location.href = "auth.html";
             return;
         }
 
         const user = await res.json();
-
         const role = user.role;
+
+        const adminPanel   = document.getElementById("adminPanel");
+        const managerPanel = document.getElementById("managerPanel");
+        const userPanel    = document.getElementById("userPanel");
 
         document.getElementById("username").innerText = user.email;
         document.getElementById("roleText").innerText = role.toUpperCase();
 
-        // hide all panels
         adminPanel.classList.add("hidden");
         managerPanel.classList.add("hidden");
         userPanel.classList.add("hidden");
@@ -212,189 +316,268 @@ async function initDashboard(){
             adminPanel.classList.remove("hidden");
 
             loadAnalytics();
+            loadUsers();     
             loadLogs();
             loadSessions();
 
-        }
-        else if(role === "manager"){
+        } else if(role === "manager"){
             managerPanel.classList.remove("hidden");
-        }
-        else{
+        } else {
             userPanel.classList.remove("hidden");
         }
 
-    }
-    catch{
+    } catch(error){
+        console.error(error);
         logout();
     }
-
 }
+
 
 // ================= LOAD ANALYTICS =================
 async function loadAnalytics(){
 
     const token = localStorage.getItem("token");
 
-    const res = await fetch(
-        "http://127.0.0.1:8000/api/analytics/stats",
-        {
-            headers:{
-                Authorization:`Bearer ${token}`
-            }
+    try{
+
+        const res = await fetch(
+            `${API}/api/analytics/stats`,
+            { headers:{ Authorization:`Bearer ${token}` } }
+        );
+
+        if(!res.ok){
+            console.error("Analytics stats failed:", res.status);
+            return;
         }
-    );
 
-    if(!res.ok) return;
+        const data = await res.json();
 
-    const data = await res.json();
+        document.getElementById("statUsers").innerText    = data.users    ?? "—";
+        document.getElementById("statPA").innerText       = data.pa_forms ?? "—";
+        document.getElementById("statApproved").innerText = data.approved ?? "—";
 
-    statUsers.innerText = data.users;
-    statPA.innerText = data.pa_forms;
-    statApproved.innerText = data.approved;
-
+    } catch(e){
+        console.error("loadAnalytics error:", e);
+    }
 }
+
+
+// ================= LOAD USERS =================
+async function loadUsers(){
+
+    const token = localStorage.getItem("token");
+
+    try{
+
+        const res = await fetch(
+            `${API}/api/admin/users`,
+            { headers:{ Authorization:`Bearer ${token}` } }
+        );
+
+        const tbody = document.getElementById("usersTable");
+
+        if(!res.ok){
+            tbody.innerHTML = `<tr><td colspan="4" class="err">⚠ Failed to load users (${res.status})</td></tr>`;
+            return;
+        }
+
+        const users = await res.json();
+
+        if(!users.length){
+            tbody.innerHTML = `<tr><td colspan="4" style="padding:10px;color:#888;">No users found.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = "";
+
+        users.forEach(user => {
+
+            const roleColor =
+                user.role === "admin"   ? "red"     :
+                user.role === "manager" ? "#007BFF" : "green";
+
+            tbody.innerHTML += `
+            <tr>
+                <td style="padding:8px;border-bottom:1px solid #eee;">${user.email}</td>
+                <td style="border-bottom:1px solid #eee;">${user.username || "-"}</td>
+                <td style="color:${roleColor};font-weight:bold;border-bottom:1px solid #eee;">${user.role}</td>
+                <td style="border-bottom:1px solid #eee;">${user.created_at ? new Date(user.created_at).toLocaleString() : "-"}</td>
+            </tr>`;
+
+        });
+
+    } catch(error){
+        console.error("Users load error:", error);
+    }
+}
+
 
 // ================= LOAD LOGS =================
 async function loadLogs(){
 
     const token = localStorage.getItem("token");
+    const logBox = document.getElementById("logBox");
 
-    const res = await fetch(
-        "http://127.0.0.1:8000/api/analytics/logs",
-        {
-            headers:{
-                Authorization:`Bearer ${token}`
-            }
+    try{
+
+        const res = await fetch(
+            `${API}/api/analytics/logs`,  //  route  works once router is registered
+            { headers:{ Authorization:`Bearer ${token}` } }
+        );
+
+        if(!res.ok){
+            logBox.innerHTML = `<span style="color:red;">⚠ Failed to load logs (${res.status}). Add analytics router to main.py.</span>`;
+            return;
         }
-    );
 
-    if(!res.ok) return;
+        const logs = await res.json();
 
-    const logs = await res.json();
+        if(!logs.length){
+            logBox.innerHTML = `<span style="color:#888;">No logs found.</span>`;
+            return;
+        }
 
-    logBox.innerHTML="";
+        logBox.innerHTML = "";
 
-    logs.forEach(log=>{
-        logBox.innerHTML += `
-        <div>
-        🧾 ${log.message}
-        </div>`;
-    });
+        logs.forEach(log => {
+            logBox.innerHTML += `
+            <div style="margin-bottom:5px;">
+                🧾 <span style="color:#888;font-size:11px;">${log.time ? new Date(log.time).toLocaleTimeString() : ""}</span>
+                ${log.message}
+            </div>`;
+        });
 
+        // Scroll to latest log
+        logBox.scrollTop = logBox.scrollHeight;
+
+    } catch(e){
+        logBox.innerHTML = `<span style="color:red;">⚠ Error: ${e.message}</span>`;
+    }
 }
+
 
 // ================= LOAD SESSIONS =================
 async function loadSessions(){
 
     const token = localStorage.getItem("token");
 
-    const res = await fetch(
-        "http://127.0.0.1:8000/api/auth/sessions",
-        {
-            headers:{
-                Authorization:`Bearer ${token}`
-            }
+    try{
+
+        const res = await fetch(
+            `${API}/api/auth/sessions`,
+            { headers:{ Authorization:`Bearer ${token}` } }
+        );
+
+        const tbody = document.getElementById("sessionTableBody");
+
+        if(!res.ok){
+            tbody.innerHTML = `<tr><td colspan="7" class="err">⚠ Failed to load sessions (${res.status})</td></tr>`;
+            return;
         }
-    );
 
-    if(!res.ok) return;
+        const sessions = await res.json();
 
-    const sessions = await res.json();
+        // Update live session count in analytics stat card
+        const activeCount = sessions.filter(s => s.status === "active").length;
+        document.getElementById("statSessions").innerText = activeCount;
 
-    sessionTableBody.innerHTML="";
+        if(!sessions.length){
+            tbody.innerHTML = `<tr><td colspan="7" style="padding:10px;color:#888;">No sessions found.</td></tr>`;
+            return;
+        }
 
-    sessions.forEach(session=>{
+        tbody.innerHTML = "";
 
-        sessionTableBody.innerHTML += `
+        sessions.forEach(session => {
 
-        <tr>
+            const statusColor = session.status === "active" ? "green" : "red";
 
-        <td>${session.email}</td>
+            tbody.innerHTML += `
+            <tr>
+                <td style="padding:8px;">${session.email}</td>
+                <td>${session.role}</td>
+                <td>${session.ip || "-"}</td>
+                <td style="font-size:12px;">${session.user_agent?.substring(0,30) || "-"}</td>
+                <td style="font-size:12px;">${new Date(session.login_time).toLocaleString()}</td>
+                <td style="color:${statusColor};font-weight:bold;">${session.status}</td>
+                <td>
+                    ${session.status === "active"
+                        ? `<button onclick="forceLogout('${session.token}')"
+                            style="background:red;color:white;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;">
+                            Force Logout
+                           </button>`
+                        : "-"
+                    }
+                </td>
+            </tr>`;
 
-        <td>${session.role}</td>
+        });
 
-        <td>${session.ip || "-"}</td>
-
-        <td>${session.user_agent?.substring(0,25) || "-"}</td>
-
-        <td>
-        ${new Date(session.login_time).toLocaleString()}
-        </td>
-
-        <td style="color:green;">
-        ${session.status}
-        </td>
-
-        <td>
-        <button onclick="forceLogout('${session.session_id}')"
-        style="
-        background:red;
-        color:white;
-        border:none;
-        padding:5px 10px;
-        border-radius:5px;">
-        Force Logout
-        </button>
-        </td>
-
-        </tr>
-
-        `;
-
-    });
-
+    } catch(error){
+        console.error("Session load error:", error);
+    }
 }
+
 
 // ================= FORCE LOGOUT =================
-async function forceLogout(session_id){
+async function forceLogout(sessionToken){
 
-    const token = localStorage.getItem("token");
+    const adminToken = localStorage.getItem("token");
 
-    if(!confirm("Force logout session?")) return;
+    if(!confirm("Force logout this session?")) return;
 
-    await fetch(
-        `http://127.0.0.1:8000/api/auth/sessions/force-logout/${session_id}`,
-        {
-            method:"POST",
-            headers:{
-                Authorization:`Bearer ${token}`
-            }
-        }
-    );
+    try{
+
+        const res = await fetch(
+            `${API}/api/auth/sessions/force-logout/${sessionToken}`,
+            { method:"POST", headers:{ Authorization:`Bearer ${adminToken}` } }
+        );
+
+        alert(res.ok ? "✅ Session terminated." : "⚠ Failed to terminate session.");
+
+    } catch(e){
+        alert("⚠ Error: " + e.message);
+    }
 
     loadSessions();
-
 }
+
 
 // ================= LOGOUT =================
 async function logout(){
 
     const token = localStorage.getItem("token");
 
-    await fetch(
-        "http://127.0.0.1:8000/api/auth/logout",
-        {
-            method:"POST",
-            headers:{
-                Authorization:`Bearer ${token}`
-            }
-        }
-    );
+    try{
+        await fetch(
+            `${API}/api/auth/logout`,
+            { method:"POST", headers:{ Authorization:`Bearer ${token}` } }
+        );
+    } catch(_){}
 
     localStorage.clear();
-
-    window.location.href="auth.html";
-
+    window.location.href = "auth.html";
 }
 
-// auto refresh sessions every 10 seconds
-setInterval(()=>{
-    if(roleText.innerText === "ADMIN"){
+
+// ================= AUTO REFRESH =================
+// Sessions every 5s
+setInterval(() => {
+    if(document.getElementById("roleText").innerText === "ADMIN"){
         loadSessions();
     }
-},10000);
+}, 5000);
 
-// start
+// Stats + Logs every 30s
+setInterval(() => {
+    if(document.getElementById("roleText").innerText === "ADMIN"){
+        loadAnalytics();
+        loadLogs();
+    }
+}, 30000);
+
+
+// ================= START =================
 window.onload = initDashboard;
 
 </script>

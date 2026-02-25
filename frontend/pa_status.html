@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>PA Status</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<style>
+:root{
+  --primary:#0F3C88;
+  --border:#CBD5E1;
+  --bg:#F8FAFC;
+  --card:#FFFFFF;
+  --text:#1E293B;
+  --muted:#64748B;
+  --green:#16A34A;
+  --yellow:#CA8A04;
+  --red:#DC2626;
+}
+*{box-sizing:border-box;font-family:system-ui,sans-serif;}
+body{margin:0;background:var(--bg);color:var(--text);}
+
+.topbar{
+  background:var(--primary);color:white;
+  padding:13px 30px;display:flex;align-items:center;gap:12px;
+  box-shadow:0 2px 8px rgba(0,0,0,.2);
+}
+.topbar .title{flex:1;font-size:16px;font-weight:600;}
+.btn-top{
+  padding:7px 16px;border:none;border-radius:7px;font-size:13px;
+  font-weight:600;cursor:pointer;font-family:inherit;
+  background:rgba(255,255,255,.15);color:white;
+  border:1px solid rgba(255,255,255,.3);transition:.2s;
+}
+.btn-top:hover{background:rgba(255,255,255,.25);}
+
+.page{display:flex;justify-content:center;padding:30px 16px;}
+.card{
+  width:100%;max-width:800px;background:var(--card);
+  border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.08);
+  padding:32px;
+}
+
+/* Status badge */
+.status-badge{
+  display:inline-block;padding:6px 18px;border-radius:20px;
+  font-weight:700;font-size:15px;letter-spacing:.5px;
+}
+.status-DRAFT    {background:#FEF9C3;color:#854D0E;}
+.status-APPROVED {background:#DCFCE7;color:#15803D;}
+.status-REJECTED {background:#FEE2E2;color:#991B1B;}
+.status-PENDING  {background:#E0F2FE;color:#0369A1;}
+
+/* Hero section */
+.hero{
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:16px;
+  padding:20px 24px;border-radius:10px;
+  background:var(--bg);border:1px solid var(--border);
+  margin-bottom:28px;
+}
+.pa-id{font-size:13px;color:var(--muted);margin-top:4px;word-break:break-all;}
+
+/* Fields grid */
+.section-title{
+  font-size:13px;font-weight:700;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.6px;
+  margin:24px 0 12px;border-bottom:1px solid var(--border);padding-bottom:6px;
+}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;}
+.field label{font-size:12px;color:var(--muted);display:block;margin-bottom:3px;}
+.field .val{
+  font-size:14px;font-weight:500;color:var(--text);
+  background:var(--bg);border:1px solid var(--border);
+  border-radius:6px;padding:9px 12px;min-height:38px;
+  word-break:break-word;white-space:pre-wrap;
+}
+.field.wide{grid-column:1/-1;}
+
+/* Timeline */
+.timeline{margin-top:8px;}
+.tl-item{
+  display:flex;gap:12px;align-items:flex-start;
+  padding:10px 0;border-bottom:1px solid var(--border);
+}
+.tl-dot{
+  width:10px;height:10px;border-radius:50%;
+  background:var(--primary);flex-shrink:0;margin-top:4px;
+}
+.tl-dot.green{background:var(--green);}
+.tl-dot.red  {background:var(--red);}
+.tl-label{font-size:13px;color:var(--text);}
+.tl-time {font-size:11px;color:var(--muted);}
+
+/* Buttons */
+.actions{display:flex;gap:12px;margin-top:28px;flex-wrap:wrap;}
+.btn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:11px 22px;border:none;border-radius:8px;
+  font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:.2s;
+}
+.btn:hover{opacity:.88;transform:translateY(-1px);}
+.btn-primary  {background:var(--primary);color:white;}
+.btn-secondary{background:#E5EDFF;color:var(--primary);}
+.btn-success  {background:var(--green);color:white;}
+
+/* Loading / error */
+#loading{text-align:center;padding:60px;font-size:16px;color:var(--muted);}
+#errorBox{
+  display:none;background:#FEE2E2;color:#991B1B;
+  padding:16px;border-radius:8px;margin-bottom:20px;font-weight:500;
+}
+#content{display:none;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <button class="btn-top" onclick="history.back()">← Back</button>
+  <div class="title">📋 PA Status</div>
+  <button class="btn-top" onclick="logout()">Logout</button>
+</div>
+
+<div class="page">
+<div class="card">
+
+  <div id="errorBox"></div>
+  <div id="loading">⏳ Loading PA details…</div>
+
+  <div id="content">
+
+    <!-- Hero -->
+    <div class="hero">
+      <div>
+        <div style="font-size:20px;font-weight:700;">Prior Authorization Request</div>
+        <div class="pa-id" id="paIdDisplay"></div>
+        <div style="margin-top:10px;"><span class="status-badge" id="statusBadge"></span></div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:12px;color:var(--muted);">Submitted</div>
+        <div style="font-weight:600;" id="createdAt">—</div>
+      </div>
+    </div>
+
+    <!-- Medical Info -->
+    <div class="section-title">Medical Information</div>
+    <div class="grid">
+      <div class="field"><label>Medication / Procedure</label><div class="val" id="medication">—</div></div>
+      <div class="field"><label>Frequency</label><div class="val" id="frequency">—</div></div>
+      <div class="field"><label>CPT / HCPCS Code</label><div class="val" id="cpt">—</div></div>
+      <div class="field wide"><label>Diagnosis / ICD-10</label><div class="val" id="diagnosis">—</div></div>
+    </div>
+
+    <!-- Clinical -->
+    <div class="section-title">Clinical Information</div>
+    <div class="grid">
+      <div class="field wide"><label>Clinical History / Medical Necessity</label><div class="val" id="history">—</div></div>
+      <div class="field wide"><label>Failed Treatments</label><div class="val" id="failed">—</div></div>
+    </div>
+
+    <!-- Review Info (shown only if reviewed) -->
+    <div id="reviewSection" style="display:none;">
+      <div class="section-title">Review Decision</div>
+      <div class="grid">
+        <div class="field"><label>Reviewer</label><div class="val" id="reviewer">—</div></div>
+        <div class="field"><label>Decision</label><div class="val" id="decision">—</div></div>
+        <div class="field"><label>Reviewed At</label><div class="val" id="reviewedAt">—</div></div>
+        <div class="field wide"><label>Comments</label><div class="val" id="comments">—</div></div>
+      </div>
+    </div>
+
+    <!-- Timeline -->
+    <div class="section-title">Timeline</div>
+    <div class="timeline" id="timeline"></div>
+
+    <!-- Actions -->
+    <div class="actions">
+      <button class="btn btn-secondary" onclick="window.location.href='pa_form.html'">➕ New PA Request</button>
+      <button class="btn btn-secondary" onclick="window.location.href='pa_list.html'">📄 My PA List</button>
+      <button class="btn btn-primary"   id="downloadBtn" style="display:none" onclick="downloadPDF()">⬇ Download PDF</button>
+    </div>
+
+  </div><!-- end #content -->
+</div>
+</div>
+
+<script>
+const API = "http://127.0.0.1:8000";
+
+// ── Get PA ID from URL ──────────────────────────────────────────
+const params = new URLSearchParams(window.location.search);
+const paId   = params.get("id");
+
+// ── Auth guard ──────────────────────────────────────────────────
+const token = localStorage.getItem("token");
+if (!token) window.location.href = "auth.html";
+
+// ── Helpers ─────────────────────────────────────────────────────
+function val(id, text) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = text || "—";
+}
+
+function fmtDate(iso) {
+  if (!iso) return "—";
+  try { return new Date(iso).toLocaleString(); }
+  catch { return iso; }
+}
+
+function showError(msg) {
+  const box = document.getElementById("errorBox");
+  box.textContent = "⚠ " + msg;
+  box.style.display = "block";
+  document.getElementById("loading").style.display = "none";
+}
+
+function addTimeline(label, iso, dotClass="") {
+  const div = document.createElement("div");
+  div.className = "tl-item";
+  div.innerHTML = `
+    <div class="tl-dot ${dotClass}"></div>
+    <div>
+      <div class="tl-label">${label}</div>
+      <div class="tl-time">${fmtDate(iso)}</div>
+    </div>`;
+  document.getElementById("timeline").appendChild(div);
+}
+
+// ── Load PA ──────────────────────────────────────────────────────
+async function loadPA() {
+  if (!paId) { showError("No PA ID in URL."); return; }
+
+  try {
+    const res = await fetch(`${API}/api/pa/${paId}`, {
+      headers: { "Authorization": "Bearer " + token }
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      showError(data.detail || "Failed to load PA.");
+      return;
+    }
+
+    // ── Populate ─────────────────────────────────────────────────
+    document.getElementById("paIdDisplay").textContent = "PA ID: " + (data._id || paId);
+
+    // Status badge
+    const status = (data.status || "DRAFT").toUpperCase();
+    const badge  = document.getElementById("statusBadge");
+    badge.textContent = status;
+    badge.className   = "status-badge status-" + status;
+
+    // Dates
+    val("createdAt", fmtDate(data.created_at));
+
+    // Medical
+    val("medication", data.medication || data.procedure);
+    val("frequency",  data.frequency);
+    val("cpt",        data.cpt);
+    val("diagnosis",  data.diagnosis);
+
+    // Clinical
+    val("history", data.history || data.medical_necessity);
+    val("failed",  data.failed);
+
+    // Review section
+    if (data.reviewer || data.reviewed_at) {
+      document.getElementById("reviewSection").style.display = "block";
+      val("reviewer",   data.reviewer);
+      val("decision",   data.status);
+      val("reviewedAt", fmtDate(data.reviewed_at));
+      val("comments",   data.comments);
+    }
+
+    // PDF download button (approved only)
+    if (status === "APPROVED") {
+      document.getElementById("downloadBtn").style.display = "inline-flex";
+    }
+
+    // Timeline
+    addTimeline("PA Submitted", data.created_at);
+    if (data.reviewed_at) {
+      const dotClass = status === "APPROVED" ? "green" : "red";
+      addTimeline("PA " + status, data.reviewed_at, dotClass);
+    }
+
+    // Show content
+    document.getElementById("loading").style.display = "none";
+    document.getElementById("content").style.display  = "block";
+
+  } catch (err) {
+    console.error(err);
+    showError("Cannot connect to server.");
+  }
+}
+
+// ── Download PDF ─────────────────────────────────────────────────
+async function downloadPDF() {
+  try {
+    const res = await fetch(`${API}/api/pa/${paId}/download`, {
+      headers: { "Authorization": "Bearer " + token }
+    });
+    if (!res.ok) { alert("PDF not available yet."); return; }
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement("a");
+    a.href = url; a.download = `PA_${paId}.pdf`; a.click();
+    URL.revokeObjectURL(url);
+  } catch { alert("PDF download failed."); }
+}
+
+// ── Logout ───────────────────────────────────────────────────────
+function logout() {
+  localStorage.clear();
+  window.location.href = "auth.html";
+}
+
+// ── Init ─────────────────────────────────────────────────────────
+loadPA();
+</script>
+</body>
+</html>

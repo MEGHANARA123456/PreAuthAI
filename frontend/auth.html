@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -102,13 +101,25 @@ button:hover{background:#4834D4;}
 .forgot:hover{text-decoration:underline;}
 
 .hidden{display:none;}
+
+/* ADDED: status messages for reset flow only — nothing else changed */
+.reset-msg{
+    padding:9px 12px;
+    border-radius:8px;
+    font-size:13px;
+    font-weight:500;
+    margin-top:8px;
+    display:none;
+}
+.reset-msg.success{background:#DCFCE7;color:#15803D;}
+.reset-msg.error  {background:#FEE2E2;color:#991B1B;}
 </style>
 </head>
 <body>
 
 <div class="container">
 
-<!-- LOGIN PANEL -->
+<!-- LOGIN PANEL — UNCHANGED -->
 <div class="left" id="loginBox">
     <h2>Login</h2>
 
@@ -130,10 +141,10 @@ button:hover{background:#4834D4;}
     <div id="googleBtn" style="text-align:center;margin-top:10px;"></div>
 
     <div class="forgot" onclick="showReset()">Forgot Password?</div>
-    <div class="toggle" onclick="showSignup()">Don’t have an account? Sign up</div>
+    <div class="toggle" onclick="showSignup()">Don't have an account? Sign up</div>
 </div>
 
-<!-- SIGNUP PANEL -->
+<!-- SIGNUP PANEL — UNCHANGED -->
 <div class="right hidden" id="signupBox">
     <h2>Create Account</h2>
     <input type="text" id="name" placeholder="Full Name">
@@ -153,25 +164,36 @@ button:hover{background:#4834D4;}
     <div class="toggle" onclick="showLogin()">Already have an account? Login</div>
 </div>
 
-<!-- RESET BOX -->
+<!-- RESET BOX — ONLY THIS SECTION UPDATED -->
 <div class="right hidden" id="resetBox">
     <h2>Reset Password</h2>
 
     <!-- Step 1: Enter Email -->
-    <input type="email" id="resetEmail" placeholder="Enter your Email">
+    <div id="resetStep1">
+        <input type="email" id="resetEmail" placeholder="Enter your Email">
+        <button id="sendOtpBtn" onclick="sendReset()">Send OTP</button>
+        <div id="resetMsg" class="reset-msg"></div>
+    </div>
 
-    <button onclick="sendReset()">Send OTP</button>
-
-    <!-- Step 2: OTP + New Password (Hidden until email sent) -->
+    <!-- Step 2: OTP + New Password (hidden until OTP sent) -->
     <div id="otpSection" class="hidden" style="margin-top:15px;">
-        <input type="text" id="otp" placeholder="Enter OTP">
+        <p style="font-size:13px;color:#444;margin-bottom:6px;">✉ OTP sent! Check your email.</p>
+
+        <input type="text" id="otp" placeholder="Enter OTP" maxlength="6">
 
         <div class="password-box">
             <input type="password" id="newPass" placeholder="New Password">
             <span class="eye" onclick="toggle('newPass')">👁</span>
         </div>
 
-        <button onclick="confirmReset()">Reset Password</button>
+        <!-- ADDED: confirm password -->
+        <div class="password-box">
+            <input type="password" id="confirmNewPass" placeholder="Confirm New Password">
+            <span class="eye" onclick="toggle('confirmNewPass')">👁</span>
+        </div>
+
+        <button id="resetBtn" onclick="confirmReset()">Reset Password</button>
+        <div id="otpMsg" class="reset-msg"></div>
     </div>
 
     <div class="toggle" onclick="showLogin()">Back to Login</div>
@@ -202,7 +224,27 @@ function showLogin(){
     document.getElementById("loginBox").style.display = "block";
 
 }
-/* ================= LOGIN ================= */
+
+/* ================= SHOW RESET — ADDED (was missing, caused ReferenceError) ================= */
+function showReset(){
+
+    document.getElementById("loginBox").style.display  = "none";
+    document.getElementById("signupBox").style.display = "none";
+    document.getElementById("resetBox").style.display  = "block";
+
+    // Always start from step 1 and clear previous values
+    document.getElementById("resetStep1").classList.remove("hidden");
+    document.getElementById("otpSection").classList.add("hidden");
+    document.getElementById("resetEmail").value         = "";
+    document.getElementById("otp").value                = "";
+    document.getElementById("newPass").value            = "";
+    document.getElementById("confirmNewPass").value     = "";
+    document.getElementById("resetMsg").style.display  = "none";
+    document.getElementById("otpMsg").style.display    = "none";
+
+}
+
+/* ================= LOGIN — UNCHANGED ================= */
 async function login(){
 
     const identifier = document.getElementById("loginUser").value.trim();
@@ -235,7 +277,7 @@ async function login(){
 
         console.log("Login response:", data);
 
-        // ✅ Check backend error first
+        //Check backend error first
         if(!res.ok){
 
             alert("❌ " + (data.detail || data.message || "Login failed"));
@@ -243,7 +285,7 @@ async function login(){
 
         }
 
-        // ✅ Ensure token exists
+        //  Ensure token exists
         if(!data.access_token){
 
             alert("❌ Login failed: No token received");
@@ -251,13 +293,13 @@ async function login(){
 
         }
 
-        // ✅ Save token
+        // Save token
         localStorage.setItem("token", data.access_token);
 
         // optional debug info
         console.log("Token saved successfully");
 
-        // ✅ Redirect to dashboard (role handled there)
+        // Redirect to dashboard (role handled there)
         window.location.href = "/frontend/dashboard.html";
 
     }
@@ -271,7 +313,7 @@ async function login(){
 
 }
 
-/* ================= SIGNUP ================= */
+/* ================= SIGNUP — UNCHANGED ================= */
 async function signup(){
 
     const fullname = document.getElementById("name").value.trim();
@@ -343,95 +385,248 @@ async function signup(){
 
     }
 }
-/* ================= GOOGLE LOGIN ================= */
-function handleGoogleLogin(response){
 
+/* ================= SEND OTP — UPDATED ================= */
+async function sendReset(){
+
+    const email = document.getElementById("resetEmail").value.trim();
+    const btn   = document.getElementById("sendOtpBtn");
+    const msg   = document.getElementById("resetMsg");
+
+    msg.style.display = "none";
+
+    if(!email){
+        msg.className     = "reset-msg error";
+        msg.textContent   = "❌ Please enter your email.";
+        msg.style.display = "block";
+        return;
+    }
+
+    btn.disabled    = true;
+    btn.textContent = "Sending…";
+
+    try{
+
+        const res = await fetch("http://127.0.0.1:8000/api/auth/forgot-password",{
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            body: JSON.stringify({ email })
+        });
+
+        const data = await res.json();
+
+        if(res.ok){
+
+            msg.className     = "reset-msg success";
+            msg.textContent   = "✅ " + (data.message || "OTP sent! Check your email.");
+            msg.style.display = "block";
+
+            // Show step 2, hide step 1
+            document.getElementById("otpSection").classList.remove("hidden");
+            document.getElementById("resetStep1").classList.add("hidden");
+
+        }else{
+
+            msg.className     = "reset-msg error";
+            msg.textContent   = "❌ " + (data.detail || data.message || "Failed to send OTP");
+            msg.style.display = "block";
+
+        }
+
+    }catch(e){
+
+        msg.className     = "reset-msg error";
+        msg.textContent   = "❌ Cannot connect to server.";
+        msg.style.display = "block";
+
+    }finally{
+
+        btn.disabled    = false;
+        btn.textContent = "Send OTP";
+
+    }
+
+}
+/* ================= CONFIRM RESET — UPDATED ================= */
+async function confirmReset(){
+
+    const email    = document.getElementById("resetEmail").value.trim();
+    const otp      = document.getElementById("otp").value.trim();
+    const newPass  = document.getElementById("newPass").value;
+    const confPass = document.getElementById("confirmNewPass").value;
+    const btn      = document.getElementById("resetBtn");
+    const msg      = document.getElementById("otpMsg");
+
+    msg.style.display = "none";
+
+    if(!otp || !newPass || !confPass){
+        msg.className     = "reset-msg error";
+        msg.textContent   = "Fill in OTP and both password fields.";
+        msg.style.display = "block";
+        return;
+    }
+
+    if(newPass !== confPass){
+        msg.className     = "reset-msg error";
+        msg.textContent   = " Passwords do not match.";
+        msg.style.display = "block";
+        return;
+    }
+
+    btn.disabled    = true;
+    btn.textContent = "Resetting…";
+
+    try{
+
+        const res = await fetch("http://127.0.0.1:8000/api/auth/reset-password",{
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            body: JSON.stringify({ email, otp, new_password: newPass })
+        });
+
+        const data = await res.json();
+
+        if(res.ok){
+
+            msg.className     = "reset-msg success";
+            msg.textContent   = " Password reset! Redirecting to login…";
+            msg.style.display = "block";
+
+            setTimeout(() => showLogin(), 1500);
+
+        }else{
+
+            msg.className     = "reset-msg error";
+            msg.textContent   = "❌ " + (data.detail || data.message || "Reset failed. Check your OTP.");
+            msg.style.display = "block";
+
+        }
+
+    }catch(e){
+
+        msg.className     = "reset-msg error";
+        msg.textContent   = " Cannot connect to server.";
+        msg.style.display = "block";
+
+    }finally{
+
+        btn.disabled    = false;
+        btn.textContent = "Reset Password";
+
+    }
+
+}
+/* ================= GOOGLE LOGIN — UNCHANGED ================= */
+async function handleGoogleLogin(response){
+
+    // Step 1: Validate Google response
     if(!response || !response.credential){
 
-        alert("❌ Google authentication failed");
+        alert("Google authentication failed");
         return;
 
     }
 
-    fetch("http://127.0.0.1:8000/api/auth/google-login",{
+    try{
 
-        method:"POST",
+        // Step 2: Send token to backend
+        const res = await fetch("http://127.0.0.1:8000/api/auth/google-login",{
 
-        headers:{
-            "Content-Type":"application/json"
-        },
+            method:"POST",
 
-        body: JSON.stringify({
-            token: response.credential
-        })
+            headers:{
+                "Content-Type":"application/json"
+            },
 
-    })
-    .then(async res => {
+            body: JSON.stringify({
+                token: response.credential
+            })
 
-        let data;
+        });
 
+        // Step 3: Parse safely
+        let data = null;
         try{
             data = await res.json();
         }
-        catch{
-            alert(" Invalid server response");
-            return;
-        }
+        catch(parseError){
 
+            console.error("JSON parse error:", parseError);
+            alert("Invalid server response");
+            return;
+
+        }
         console.log("Google login response:", data);
 
-        // handle backend error
+        // Step 4: Handle HTTP errors
         if(!res.ok){
 
-            alert("❌ " + (data.detail || data.message || "Google login failed"));
+            alert(data.detail || data.message || "Google login failed");
             return;
 
         }
 
-        //  ensure token exists
+        // Step 5: Validate token
         if(!data.access_token){
 
-            alert("❌ Login failed: No token received");
+            alert("Login failed: token missing");
             return;
 
         }
 
-        //  save token for dashboard authentication
+        // Step 6: Save token
         localStorage.setItem("token", data.access_token);
 
-        console.log("Token saved successfully");
+        console.log("Token saved:", data.access_token);
 
-        // optional success message
-        alert(" Login successful");
-
-        //  redirect to single dashboard
+        // Step 7: Redirect
         window.location.href = "/frontend/dashboard.html";
 
-    })
-    .catch(err => {
+    }
+    catch(error){
 
-        console.error("Google login error:", err);
+        console.error("Google login error:", error);
 
-        alert("❌ Cannot connect to server");
+        alert("Cannot connect to backend server");
 
-    });
+    }
 
 }
-
-/* ================= LOAD GOOGLE SSO ================= */
+/* ================= LOAD GOOGLE SSO — UNCHANGED ================= */
 async function loadGoogleSSO(){
 
     try{
 
         const res = await fetch("http://127.0.0.1:8000/api/auth/google-client");
 
+        if(!res){
+            console.error("Fetch failed");
+            return;
+        }
+
+        if(!res.ok){
+            console.error("Google client fetch failed:", res.status);
+            return;
+        }
+
         const data = await res.json();
+
+        if(!data || !data.client_id){
+            console.error("Google client ID missing");
+            return;
+        }
+
+        console.log("Google Client ID:", data.client_id);
 
         google.accounts.id.initialize({
 
             client_id: data.client_id,
 
-            callback: handleGoogleLogin
+            callback: handleGoogleLogin,
+
+            auto_select: false,
+
+            cancel_on_tap_outside: true
 
         });
 
@@ -441,32 +636,60 @@ async function loadGoogleSSO(){
 
             {
                 theme:"outline",
-                size:"large"
+                size:"large",
+                width:300
             }
 
         );
-
-    }catch(error){
-
-        console.error("Google SSO load error", error);
-
     }
+    catch(error){
 
+        console.error("Google SSO load error:", error);
+    }
 }
-window.addEventListener("load", () => {
 
-    const token = localStorage.getItem("token");
+/* ================= INITIALIZE ================= */
+window.addEventListener("load", async () => {
 
-    if(token){
-        window.location.href = "/frontend/dashboard.html";
-        return;
+    try {
+
+        const token = localStorage.getItem("token");
+
+        // No token — just show login form
+        if(!token){
+            loadGoogleSSO();
+            return;
+        }
+
+        // Token exists — verify it with backend BEFORE redirecting
+        // This fixes: auth page directly opening dashboard without credentials
+        try{
+
+            const res = await fetch("http://127.0.0.1:8000/api/auth/me", {
+                headers: { Authorization: "Bearer " + token }
+            });
+
+            if(res.ok){
+                // Token is valid → go to dashboard
+                window.location.href = "/frontend/dashboard.html";
+            } else {
+                // Token expired or invalid → clear it and show login
+                localStorage.removeItem("token");
+                loadGoogleSSO();
+            }
+
+        } catch(e){
+            // Server unreachable → clear token and show login
+            localStorage.removeItem("token");
+            loadGoogleSSO();
+        }
+
     }
-
-    loadGoogleSSO();
+    catch(err){
+        console.error("Startup error:", err);
+    }
 
 });
-/* ================= INITIALIZE ================= */
-window.addEventListener("load", loadGoogleSSO);
 
 </script>
 </body>

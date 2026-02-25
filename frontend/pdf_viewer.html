@@ -1,22 +1,373 @@
 <!DOCTYPE html>
-<html>
-<head><title>PDF Viewer</title>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PA Form Viewer</title>
 <style>
-body{margin:0;background:#e8f3ff;font-family:Poppins;display:flex;justify-content:center;}
-.viewer{
- width:80vw;height:90vh;background:white;margin-top:30px;
- box-shadow:0 0 25px rgba(0,0,0,.2);border-radius:12px;overflow:hidden;
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: Poppins, system-ui, sans-serif;
+  background: #E8F3FF;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
-iframe{width:100%;height:100%;border:none;}
-</style></head>
 
+/* ── Toolbar ── */
+.toolbar {
+  background: #0F3C88;
+  color: white;
+  padding: 14px 30px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,.2);
+  flex-shrink: 0;
+}
+
+.toolbar .title {
+  font-size: 17px;
+  font-weight: 600;
+  flex: 1;
+}
+
+.toolbar .pa-id {
+  font-size: 12px;
+  background: rgba(255,255,255,.15);
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-family: monospace;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity .2s, transform .1s;
+  text-decoration: none;
+}
+.btn:hover { opacity: .88; transform: translateY(-1px); }
+
+.btn-white   { background: white; color: #0F3C88; }
+.btn-green   { background: #16A34A; color: white; }
+.btn-outline { background: rgba(255,255,255,.12); color: white; border: 1px solid rgba(255,255,255,.3); }
+
+/* ── Main area ── */
+.main {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 28px 20px;
+}
+
+.viewer-wrap {
+  width: 100%;
+  max-width: 1000px;
+  background: white;
+  border-radius: 14px;
+  box-shadow: 0 8px 30px rgba(0,0,0,.12);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Status bar inside card ── */
+.status-bar {
+  padding: 10px 20px;
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid #E2E8F0;
+  background: #F8FAFC;
+}
+.dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.dot.loading { background: #F59E0B; animation: blink 1s infinite; }
+.dot.ok      { background: #16A34A; }
+.dot.err     { background: #DC2626; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+/* ── PDF iframe ── */
+#pdfFrame {
+  width: 100%;
+  height: calc(100vh - 180px);
+  border: none;
+  display: none;
+}
+
+/* ── States ── */
+.state {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 70px 30px;
+  text-align: center;
+  gap: 14px;
+}
+.state.active { display: flex; }
+
+.state-icon { font-size: 52px; }
+.state h2   { font-size: 20px; font-weight: 700; color: #1E293B; }
+.state p    { font-size: 14px; color: #64748B; max-width: 400px; line-height: 1.6; }
+
+.spinner {
+  width: 44px; height: 44px;
+  border: 4px solid #E2E8F0;
+  border-top-color: #0F3C88;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── PA info strip ── */
+.pa-info {
+  display: none;
+  padding: 10px 20px;
+  background: #F0FDF4;
+  border-bottom: 1px solid #BBF7D0;
+  font-size: 13px;
+  color: #15803D;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.pa-info span { font-weight: 500; }
+</style>
+</head>
 <body>
-<div class="viewer"><iframe id="pdf"></iframe></div>
-<script>
-const API="http://127.0.0.1:8000/api";
-let id=new URLSearchParams(location.search).get("id");
-document.getElementById("pdf").src=`${API}/pa/${id}/download`;
-</script>
 
+<!-- ── Toolbar ── -->
+<div class="toolbar">
+  <button class="btn btn-outline" onclick="goBack()">← Back</button>
+  <div class="title">📄 PA Form Viewer</div>
+  <div class="pa-id" id="paIdLabel">Loading…</div>
+  <button class="btn btn-white" id="downloadBtn" onclick="downloadPDF()" style="display:none;">⬇ Download PDF</button>
+  <button class="btn btn-outline" onclick="window.location.reload()">🔄 Refresh</button>
+</div>
+
+<!-- ── Main ── -->
+<div class="main">
+<div class="viewer-wrap">
+
+  <!-- Status bar -->
+  <div class="status-bar">
+    <div class="dot loading" id="statusDot"></div>
+    <span id="statusText">Loading PA form…</span>
+  </div>
+
+  <!-- PA info strip (shown after load) -->
+  <div class="pa-info" id="paInfo">
+    Medication: <span id="infoMed">—</span> &nbsp;|&nbsp;
+    Diagnosis: <span id="infoDiag">—</span> &nbsp;|&nbsp;
+    Status: <span id="infoStatus">—</span>
+  </div>
+
+  <!-- Loading state -->
+  <div class="state active" id="stateLoading">
+    <div class="spinner"></div>
+    <h2>Fetching PDF…</h2>
+    <p>Authenticating and retrieving your approved PA form.</p>
+  </div>
+
+  <!-- Error state -->
+  <div class="state" id="stateError">
+    <div class="state-icon">⚠️</div>
+    <h2 id="errTitle">Could Not Load PDF</h2>
+    <p id="errMsg">An error occurred while loading the PA form.</p>
+    <div style="display:flex;gap:10px;margin-top:8px;">
+      <button class="btn btn-white" style="background:#0F3C88;color:white;" onclick="loadPDF()">🔄 Retry</button>
+      <button class="btn btn-white" onclick="goBack()">← Go Back</button>
+    </div>
+  </div>
+
+  <!-- Not approved state -->
+  <div class="state" id="stateNotApproved">
+    <div class="state-icon">🕐</div>
+    <h2>PA Not Yet Approved</h2>
+    <p>This Prior Authorization form hasn't been approved yet. PDFs are only available for approved forms. Check back after admin review.</p>
+    <button class="btn btn-white" style="background:#0F3C88;color:white;margin-top:8px;" onclick="goBack()">← Back to My Forms</button>
+  </div>
+
+  <!-- No ID state -->
+  <div class="state" id="stateNoId">
+    <div class="state-icon">🔍</div>
+    <h2>No PA Form Selected</h2>
+    <p>No PA form ID was found in the URL. Go back and select a form to view.</p>
+    <button class="btn btn-white" style="background:#0F3C88;color:white;margin-top:8px;" onclick="goBack()">← Back</button>
+  </div>
+
+  <!-- PDF iframe (shown on success) -->
+  <iframe id="pdfFrame" title="PA Form PDF"></iframe>
+
+</div>
+</div>
+
+<script>
+const API = `${location.protocol}//${location.hostname}:${location.port}/api`;
+
+const params   = new URLSearchParams(location.search);
+const paId     = params.get("id");
+let   blobUrl  = null;
+
+// ── Helper: switch visible state ───────────────────────────────
+function showState(name) {
+  ["stateLoading","stateError","stateNotApproved","stateNoId"].forEach(id => {
+    document.getElementById(id).classList.remove("active");
+  });
+  if (name) document.getElementById(name).classList.add("active");
+}
+
+function setStatus(type, msg) {
+  const dot  = document.getElementById("statusDot");
+  const text = document.getElementById("statusText");
+  dot.className  = "dot " + type;
+  text.textContent = msg;
+}
+
+// ── Main load function ─────────────────────────────────────────
+async function loadPDF() {
+
+  // No ID in URL
+  if (!paId) {
+    showState("stateNoId");
+    setStatus("err", "No PA ID in URL");
+    document.getElementById("paIdLabel").textContent = "No ID";
+    return;
+  }
+
+  document.getElementById("paIdLabel").textContent = "PA #" + paId;
+
+  // Auth check
+  const token = localStorage.getItem("token");
+  if (!token) {
+    window.location.href = "auth.html";
+    return;
+  }
+
+  showState("stateLoading");
+  setStatus("loading", "Fetching PDF…");
+
+  try {
+
+    // ── Fetch PDF as blob (iframe can't send auth headers) ──────
+    const res = await fetch(`${API}/pa/${paId}/download`, {
+      headers: { Authorization: "Bearer " + token }
+    });
+
+    // ── Handle specific error codes ─────────────────────────────
+    if (res.status === 401) {
+      localStorage.removeItem("token");
+      window.location.href = "auth.html";
+      return;
+    }
+
+    if (res.status === 403) {
+      showState("stateNotApproved");
+      setStatus("err", "PA not approved yet");
+      return;
+    }
+
+    if (res.status === 404) {
+      showState("stateError");
+      document.getElementById("errTitle").textContent = "PA Form Not Found";
+      document.getElementById("errMsg").textContent   = `No PA form found with ID: ${paId}`;
+      setStatus("err", "PA form not found (404)");
+      return;
+    }
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || `Server error ${res.status}`);
+    }
+
+    // ── Check content type is actually a PDF ────────────────────
+    const contentType = res.headers.get("content-type") || "";
+    if (!contentType.includes("pdf")) {
+      throw new Error("Server did not return a PDF file.");
+    }
+
+    // ── Convert to blob URL so iframe can display it ────────────
+    const blob = await res.blob();
+
+    // Revoke old blob URL if re-loading
+    if (blobUrl) URL.revokeObjectURL(blobUrl);
+    blobUrl = URL.createObjectURL(blob);
+
+    // Show iframe
+    const frame = document.getElementById("pdfFrame");
+    frame.src   = blobUrl;
+    frame.style.display = "block";
+    showState(null); // hide all state overlays
+
+    setStatus("ok", "PDF loaded successfully");
+    document.getElementById("downloadBtn").style.display = "inline-flex";
+
+    // ── Also load PA metadata for the info strip ────────────────
+    loadPAInfo(token);
+
+  } catch(err) {
+    console.error("PDF load error:", err);
+    showState("stateError");
+    document.getElementById("errTitle").textContent = "Failed to Load PDF";
+    document.getElementById("errMsg").textContent   = err.message || "Unknown error occurred.";
+    setStatus("err", "Error: " + err.message);
+  }
+}
+
+// ── Load PA metadata for info strip ───────────────────────────
+async function loadPAInfo(token) {
+  try {
+    const res = await fetch(`${API}/pa/${paId}`, {
+      headers: { Authorization: "Bearer " + token }
+    });
+    if (!res.ok) return;
+
+    const pa = await res.json();
+
+    document.getElementById("infoMed").textContent    = pa.medication || "—";
+    document.getElementById("infoDiag").textContent   = pa.diagnosis  || "—";
+    document.getElementById("infoStatus").textContent = pa.status     || "—";
+    document.getElementById("paInfo").style.display   = "flex";
+
+  } catch(_) { /* non-critical, skip */ }
+}
+
+// ── Download PDF to disk ───────────────────────────────────────
+function downloadPDF() {
+  if (!blobUrl) return;
+  const a = document.createElement("a");
+  a.href     = blobUrl;
+  a.download = `PA_Form_${paId}.pdf`;
+  a.click();
+}
+
+// ── Back navigation ────────────────────────────────────────────
+function goBack() {
+  if (document.referrer) {
+    history.back();
+  } else {
+    window.location.href = "pa_list.html";
+  }
+}
+
+// ── Clean up blob URL on page leave ───────────────────────────
+window.addEventListener("beforeunload", () => {
+  if (blobUrl) URL.revokeObjectURL(blobUrl);
+});
+
+// ── Start ──────────────────────────────────────────────────────
+loadPDF();
+</script>
 </body>
 </html>

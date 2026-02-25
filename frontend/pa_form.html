@@ -14,312 +14,584 @@
   --card:#FFFFFF;
   --text:#1E293B;
   --muted:#64748B;
+  --green:#16A34A;
+  --red:#DC2626;
 }
 
 * { box-sizing:border-box; font-family:system-ui, sans-serif; }
-
 body { margin:0; background:var(--bg); color:var(--text); }
 
-.page { display:flex; justify-content:center; padding:40px 16px; }
+/* ── Top bar ── */
+.topbar{
+  background:var(--primary);
+  color:white;
+  padding:13px 30px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  box-shadow:0 2px 8px rgba(0,0,0,.2);
+}
+.topbar .title{ flex:1; font-size:16px; font-weight:600; }
+.topbar .btn-top{
+  padding:7px 16px; border:none; border-radius:7px; font-size:13px;
+  font-weight:600; cursor:pointer; font-family:inherit; transition:.2s;
+  background:rgba(255,255,255,.15); color:white; border:1px solid rgba(255,255,255,.3);
+}
+.topbar .btn-top:hover{ background:rgba(255,255,255,.25); }
+
+.page { display:flex; justify-content:center; padding:30px 16px; }
 
 .card {
-  width:100%;
-  max-width:950px;
+  width:100%; max-width:950px;
   background:var(--card);
   border-radius:12px;
   box-shadow:0 10px 30px rgba(0,0,0,.08);
   padding:32px;
 }
 
-h1 { margin-top:0; }
+h1 { margin-top:0; font-size:22px; }
 
 .section { margin-bottom:28px; }
 
 .section-header {
-  background:var(--primary);
-  color:#fff;
-  padding:12px 16px;
-  border-radius:6px;
-  font-weight:600;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  cursor:pointer;
+  background:var(--primary); color:#fff;
+  padding:12px 16px; border-radius:6px; font-weight:600;
+  display:flex; justify-content:space-between; align-items:center;
+  cursor:pointer; user-select:none;
 }
-
 .section-body { padding-top:16px; }
 
 .grid {
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
   gap:16px;
+  margin-bottom:10px;
 }
 
 label { font-size:13px; color:var(--muted); display:block; margin-bottom:4px; }
 
 input, textarea, select {
-  width:100%;
-  padding:10px 12px;
-  border:1px solid var(--border);
-  border-radius:6px;
+  width:100%; padding:10px 12px;
+  border:1px solid var(--border); border-radius:6px;
+  font-family:inherit; font-size:14px;
+  transition: border-color .2s, background .2s;
+}
+input:focus, textarea:focus {
+  outline:none; border-color:var(--primary);
+  box-shadow:0 0 0 3px rgba(15,60,136,.1);
+}
+textarea { min-height:90px; resize:vertical; }
+
+/* Green highlight on AI-filled fields */
+.ai-filled {
+  border-color: var(--green) !important;
+  background: #F0FDF4 !important;
 }
 
-textarea { min-height:90px; }
-
 .radio-group, .checkbox-group {
-  display:flex;
-  gap:18px;
-  margin-top:6px;
+  display:flex; gap:18px; margin-top:6px; flex-wrap:wrap;
 }
 
 .upload-box {
-  border:2px dashed var(--border);
-  border-radius:8px;
-  padding:24px;
-  text-align:center;
-  color:var(--muted);
+  border:2px dashed var(--border); border-radius:8px;
+  padding:24px; text-align:center; color:var(--muted);
+  cursor:pointer; transition:border-color .2s;
 }
+.upload-box:hover { border-color:var(--primary); }
 
+/* ── Buttons ── */
+.btn {
+  display:inline-flex; align-items:center; gap:6px;
+  padding:11px 22px; border:none; border-radius:8px;
+  font-size:14px; font-weight:600; cursor:pointer;
+  font-family:inherit; transition:.2s;
+}
+.btn:hover{ opacity:.88; transform:translateY(-1px); }
+.btn:disabled{ opacity:.6; cursor:not-allowed; transform:none; }
+.btn-primary  { background:var(--primary); color:white; }
+.btn-secondary{ background:#E5EDFF; color:var(--primary); }
+.btn-success  { background:var(--green); color:white; }
+.btn-gray     { background:#64748B; color:white; }
+
+/* ── AI banner ── */
+#aiBanner{
+  display:none; padding:10px 14px; border-radius:8px;
+  margin-top:12px; font-size:13px; font-weight:500;
+}
+#aiBanner.loading{ background:#FEF9C3; color:#854D0E; }
+#aiBanner.success{ background:#DCFCE7; color:#15803D; }
+#aiBanner.error  { background:#FEE2E2; color:#991B1B; }
+
+/* ── Actions row ── */
 .actions {
-  display:flex;
-  justify-content:center;
-  margin-top:32px;
+  display:flex; justify-content:center;
+  gap:12px; margin-top:32px; flex-wrap:wrap;
 }
 
-button {
-  background:var(--primary);
-  color:#fff;
-  border:none;
-  padding:14px 36px;
-  border-radius:8px;
-  font-size:16px;
-  cursor:pointer;
-}
-
-button.secondary {
-  background:#E5EDFF;
-  color:#0F3C88;
+/* ── Bottom nav ── */
+.bottom-nav{
+  display:flex; justify-content:space-between; align-items:center;
+  margin-top:28px; padding-top:20px;
+  border-top:2px solid var(--border);
+  flex-wrap:wrap; gap:12px;
 }
 
 .signature-box {
-  border:1px solid var(--border);
-  border-radius:6px;
-  padding:12px;
-  text-align:center;
+  border:1px solid var(--border); border-radius:6px;
+  padding:12px; text-align:center;
 }
-
 canvas {
-  border:1px dashed var(--border);
-  border-radius:6px;
+  border:1px dashed var(--border); border-radius:6px;
+  cursor:crosshair; display:block; margin:0 auto;
 }
 
 .hidden { display:none; }
 </style>
 </head>
-
 <body>
+
+<!-- ── Top Bar ── -->
+<div class="topbar">
+  <button class="btn-top" onclick="goBack()">← Back</button>
+  <div class="title">📋 Prior Authorization Form</div>
+  
+  <button class="btn-top" onclick="logoutAndGo()">Logout</button>
+</div>
+
 <div class="page">
 <div class="card">
 
-<h1> Prior Authorization Form</h1>
+<h1>Prior Authorization Form</h1>
 
-<!-- ================= LLM AUTO-FILL ================= -->
+<!-- ================= AI AUTO-FILL ================= -->
 <div class="section">
-<div class="section-header">Clinical Notes (AI Auto-Fill)</div>
-<div class="section-body">
-<textarea id="clinicalNotes" placeholder="Paste physician clinical notes here..."></textarea>
-<br><br>
-<button class="secondary" onclick="autoFillFromLLM()">Auto-Fill Using AI</button>
-</div>
+  <div class="section-header">🤖 Clinical Notes (AI Auto-Fill)</div>
+  <div class="section-body">
+    <label>Paste clinical / SOAP notes here</label>
+    <textarea id="clinicalNotes" rows="5"
+      placeholder="e.g: Patient is a 58-year-old male with chest pain on exertion. Diagnosis: Hypertension. Medication: Metformin 500mg twice daily. Failed previous treatment with lisinopril..."></textarea>
+    <br>
+    <button class="btn btn-secondary" id="autoFillBtn" onclick="autoFillFromLLM()">✨ Auto-Fill Using AI</button>
+    <div id="aiBanner"></div>
+  </div>
 </div>
 
 <!-- ================= PATIENT INFO ================= -->
 <div class="section">
-<div class="section-header" onclick="toggle(this)">Patient Information ⌄</div>
-<div class="section-body">
-<div class="grid">
-<input id="fname" placeholder="First Name">
-<input id="lname" placeholder="Last Name">
-<input type="date">
-<input placeholder="Phone Number">
-<input placeholder="Email">
-<input placeholder="Member ID">
-</div>
-
-<label>Address</label>
-<input placeholder="Street Address">
-<input placeholder="Street Address Line 2">
-<div class="grid">
-<input placeholder="City">
-<input placeholder="State / Province">
-<input placeholder="Postal / Zip Code">
-</div>
-
-<label>Sex</label>
-<div class="radio-group">
-<label><input type="radio" name="sex"> Female</label>
-<label><input type="radio" name="sex"> Male</label>
-<label><input type="radio" name="sex"> Other</label>
-</div>
-</div>
+  <div class="section-header" onclick="toggle(this)">Patient Information ⌄</div>
+  <div class="section-body">
+    <div class="grid">
+      <div><label>First Name</label><input id="fname" placeholder="First Name"></div>
+      <div><label>Last Name</label><input id="lname" placeholder="Last Name"></div>
+      <div><label>Date of Birth</label><input type="date" id="dob"></div>
+      <div><label>Phone Number</label><input id="phone" placeholder="Phone Number"></div>
+      <div><label>Email</label><input id="pemail" placeholder="Email"></div>
+      <div><label>Member ID</label><input id="memberId" placeholder="Member ID"></div>
+    </div>
+    <label>Address</label>
+    <input id="addr1" placeholder="Street Address" style="margin-bottom:8px;">
+    <input id="addr2" placeholder="Street Address Line 2" style="margin-bottom:8px;">
+    <div class="grid">
+      <input id="city" placeholder="City">
+      <input id="state" placeholder="State / Province">
+      <input id="zip" placeholder="Postal / Zip Code">
+    </div>
+    <label style="margin-top:12px;">Sex</label>
+    <div class="radio-group">
+      <label><input type="radio" name="sex" value="female"> Female</label>
+      <label><input type="radio" name="sex" value="male"> Male</label>
+      <label><input type="radio" name="sex" value="other"> Other</label>
+    </div>
+  </div>
 </div>
 
 <!-- ================= PRESCRIBER ================= -->
 <div class="section">
-<div class="section-header" onclick="toggle(this)">Prescriber Information ⌄</div>
-<div class="section-body">
-<div class="grid">
-<input placeholder="Prescriber First Name">
-<input placeholder="Prescriber Last Name">
-<input placeholder="NPI Number">
-<input placeholder="Office Phone">
-<input placeholder="Office Fax">
-</div>
-</div>
+  <div class="section-header" onclick="toggle(this)">Prescriber Information ⌄</div>
+  <div class="section-body">
+    <div class="grid">
+      <div><label>First Name</label><input id="prescriberFname" placeholder="Prescriber First Name"></div>
+      <div><label>Last Name</label><input id="prescriberLname" placeholder="Prescriber Last Name"></div>
+      <div><label>NPI Number</label><input id="npi" placeholder="NPI Number"></div>
+      <div><label>Office Phone</label><input id="officePhone" placeholder="Office Phone"></div>
+      <div><label>Office Fax</label><input id="officeFax" placeholder="Office Fax"></div>
+    </div>
+  </div>
 </div>
 
 <!-- ================= MEDICAL INFO ================= -->
 <div class="section">
-<div class="section-header" onclick="toggle(this)">Medical Information ⌄</div>
-<div class="section-body">
-<input id="medication" placeholder="Medication">
-<textarea id="strength" placeholder="Strength & Route of Administration"></textarea>
-<input id="frequency" placeholder="Frequency">
+  <div class="section-header" onclick="toggle(this)">Medical Information ⌄</div>
+  <div class="section-body">
+    <label>Medication / Procedure</label>
+    <input id="medication" placeholder="Medication or procedure name">
 
-<label>Is this a new prescription?</label>
-<div class="radio-group">
-<label><input type="radio" name="newrx"> Yes</label>
-<label><input type="radio" name="newrx"> No</label>
-</div>
+    <label style="margin-top:12px;">Strength &amp; Route of Administration</label>
+    <textarea id="strength" placeholder="e.g. 500mg oral tablet"></textarea>
 
-<div class="grid">
-<input type="date">
-<input placeholder="Expected Length of Therapy">
-<input placeholder="Quantity">
-<input placeholder="Height / Weight">
-<input placeholder="Drug Allergies">
-</div>
+    <label>Frequency</label>
+    <input id="frequency" placeholder="e.g. twice daily">
 
-<textarea id="diagnosis" placeholder="Diagnosis / ICD-10 Codes"></textarea>
-<input id="cpt" placeholder="CPT / HCPCS Codes">
-</div>
+    <label>Is this a new prescription?</label>
+    <div class="radio-group">
+      <label><input type="radio" name="newrx"> Yes</label>
+      <label><input type="radio" name="newrx"> No</label>
+    </div>
+
+    <div class="grid" style="margin-top:12px;">
+      <div><label>Start Date</label><input type="date" id="startDate"></div>
+      <div><label>Length of Therapy</label><input id="therapyLength" placeholder="e.g. 6 months"></div>
+      <div><label>Quantity</label><input id="quantity" placeholder="Quantity"></div>
+      <div><label>Height / Weight</label><input id="heightWeight" placeholder="Height / Weight"></div>
+      <div><label>Drug Allergies</label><input id="allergies" placeholder="Drug Allergies"></div>
+    </div>
+
+    <label style="margin-top:12px;">Diagnosis / ICD-10 Codes</label>
+    <textarea id="diagnosis" placeholder="e.g. Type 2 Diabetes - E11.9"></textarea>
+
+    <label>CPT / HCPCS Codes</label>
+    <input id="cpt" placeholder="e.g. 99213">
+  </div>
 </div>
 
 <!-- ================= MEDICAL NECESSITY ================= -->
 <div class="section">
-<div class="section-header" onclick="toggle(this)">Clinical Information / Medical Necessity ⌄</div>
-<div class="section-body">
-<label>Clinical History</label>
-<textarea id="history"></textarea>
+  <div class="section-header" onclick="toggle(this)">Clinical Information / Medical Necessity ⌄</div>
+  <div class="section-body">
+    <label>Clinical History</label>
+    <textarea id="history" placeholder="Patient clinical history and background"></textarea>
 
-<label>Failed Treatments</label>
-<textarea id="failed"></textarea>
+    <label>Failed Treatments</label>
+    <textarea id="failed" placeholder="Prior treatments attempted and outcomes"></textarea>
 
-<label>Urgency</label>
-<div class="radio-group">
-<label><input type="radio" name="urgency"> Standard</label>
-<label><input type="radio" name="urgency"> Urgent</label>
-</div>
-</div>
+    <label>Urgency</label>
+    <div class="radio-group">
+      <label><input type="radio" name="urgency" value="standard"> Standard</label>
+      <label><input type="radio" name="urgency" value="urgent"> Urgent</label>
+    </div>
+  </div>
 </div>
 
 <!-- ================= RATIONALE ================= -->
 <div class="section">
-<div class="section-header" onclick="toggle(this)">Rationale for Exception Request ⌄</div>
-<div class="section-body">
-<div class="checkbox-group">
-<label><input type="checkbox"> Adverse outcome with alternatives</label>
-<label><input type="checkbox"> Complex chronic condition</label>
-<label><input type="checkbox"> Higher dosage required</label>
-<label><input type="checkbox"> Formulary exception</label>
-<label><input type="checkbox"> Other</label>
-</div>
-<textarea placeholder="Explain in detail"></textarea>
-</div>
+  <div class="section-header" onclick="toggle(this)">Rationale for Exception Request ⌄</div>
+  <div class="section-body">
+    <div class="checkbox-group">
+      <label><input type="checkbox"> Adverse outcome with alternatives</label>
+      <label><input type="checkbox"> Complex chronic condition</label>
+      <label><input type="checkbox"> Higher dosage required</label>
+      <label><input type="checkbox"> Formulary exception</label>
+      <label><input type="checkbox"> Other</label>
+    </div>
+    <textarea id="rationaleDetail" placeholder="Explain in detail" style="margin-top:12px;"></textarea>
+  </div>
 </div>
 
 <!-- ================= DOCUMENTS ================= -->
 <div class="section">
-<div class="section-header" onclick="toggle(this)">Upload Supporting Documents ⌄</div>
-<div class="section-body">
-<div class="upload-box">Browse Files or Drag & Drop</div>
-</div>
+  <div class="section-header" onclick="toggle(this)">Upload Supporting Documents ⌄</div>
+  <div class="section-body">
+    <div class="upload-box" onclick="document.getElementById('fileInput').click()">
+      📎 Browse Files or Drag &amp; Drop
+      <input type="file" id="fileInput" multiple style="display:none">
+    </div>
+    <div id="fileList" style="margin-top:8px;font-size:13px;color:var(--muted);"></div>
+  </div>
 </div>
 
 <!-- ================= EXPEDITED ================= -->
 <div class="section">
-<div class="section-header" onclick="toggle(this)">Request for Expedited Review ⌄</div>
-<div class="section-body">
-<div class="checkbox-group">
-<label><input type="checkbox"> Expedited review (24 hours)</label>
-<label><input type="checkbox"> Other</label>
+  <div class="section-header" onclick="toggle(this)">Request for Expedited Review ⌄</div>
+  <div class="section-body">
+    <div class="checkbox-group">
+      <label><input type="checkbox"> Expedited review (24 hours)</label>
+      <label><input type="checkbox"> Other</label>
+    </div>
+    <label style="margin-top:12px;">Date</label>
+    <input type="date" id="reviewDate">
+    <label style="margin-top:12px;">Signature</label>
+    <div class="signature-box">
+      <canvas id="sig" width="500" height="130"></canvas><br><br>
+      <button class="btn btn-secondary" onclick="clearSig()" type="button" style="width:auto;">Clear Signature</button>
+    </div>
+  </div>
 </div>
 
-<label>Date</label>
-<input type="date">
-
-<label>Signature</label>
-<div class="signature-box">
-<canvas id="sig" width="400" height="120"></canvas><br>
-<button onclick="clearSig()" type="button">Clear</button>
-</div>
-</div>
-</div>
-
+<!-- ================= SUBMIT ================= -->
 <div class="actions">
-<button onclick="submitForm()">Submit</button>
+  <button class="btn btn-gray" onclick="clearForm()">🗑 Clear Form</button>
+  <button class="btn btn-primary" id="submitBtn" onclick="submitForm()">📤 Submit PA Request</button>
 </div>
 
+<!-- ================= BOTTOM NAV ================= -->
+<div class="bottom-nav">
+  <button class="btn btn-secondary" onclick="goBack()">← Back to Dashboard</button>
+  
 </div>
-</div>
+
+</div><!-- end card -->
+</div><!-- end page -->
 
 <script>
-function toggle(h){ h.nextElementSibling.classList.toggle("hidden"); }
+const API = "http://127.0.0.1:8000";
 
-/* ===== MOCK LLM AUTO-FILL ===== */
-function autoFillFromLLM(){
-  // This simulates LLM output
-  const aiData = {
-    medication:"Atorvastatin",
-    frequency:"Once daily",
-    diagnosis:"E78.5 - Hyperlipidemia",
-    history:"Patient has elevated LDL despite lifestyle modifications.",
-    failed:"Diet and exercise trial for 6 months",
-    cpt:"99213"
-  };
-
-  medication.value = aiData.medication;
-  frequency.value = aiData.frequency;
-  diagnosis.value = aiData.diagnosis;
-  history.value = aiData.history;
-  failed.value = aiData.failed;
-  cpt.value = aiData.cpt;
-
-  alert("AI auto-fill completed");
+// ── Helper: extract readable error ──────────────────────────────
+// Fixes [object Object] — FastAPI detail can be array, string, or object
+function extractError(data) {
+    if (!data) return "Unknown error";
+    if (Array.isArray(data.detail))
+        return data.detail.map(e => e.msg || JSON.stringify(e)).join(", ");
+    if (typeof data.detail === "string")  return data.detail;
+    if (typeof data.message === "string") return data.message;
+    return JSON.stringify(data);
 }
 
-function submitForm(){
-  alert("Prior Authorization Submitted Successfully");
+// ── Toggle sections ──────────────────────────────────────────────
+function toggle(header) {
+    header.nextElementSibling.classList.toggle("hidden");
 }
 
-/* ===== Signature ===== */
-const canvas = document.getElementById("sig");
-const ctx = canvas.getContext("2d");
-let drawing=false;
+// ── Banner ───────────────────────────────────────────────────────
+function setBanner(type, msg) {
+    const b = document.getElementById("aiBanner");
+    b.className = type;
+    b.style.display = "block";
+    b.textContent = msg;
+}
 
-canvas.onmousedown=()=>drawing=true;
-canvas.onmouseup=()=>drawing=false;
-canvas.onmousemove=e=>{
-  if(!drawing)return;
-  ctx.lineWidth=2;
-  ctx.lineTo(e.offsetX,e.offsetY);
-  ctx.stroke();
+// ── Fill field + green highlight ─────────────────────────────────
+function fill(id, value) {
+    if (!value) return;
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.value = value;
+    el.classList.add("ai-filled");
+    setTimeout(() => el.classList.remove("ai-filled"), 4000);
+}
+
+// ── AI AUTO-FILL ─────────────────────────────────────────────────
+async function autoFillFromLLM() {
+    const notes = document.getElementById("clinicalNotes").value.trim();
+    const btn   = document.getElementById("autoFillBtn");
+
+    if (!notes) { setBanner("error", "⚠ Paste clinical notes first."); return; }
+    if (notes.length < 30) { setBanner("error", "⚠ Notes too short."); return; }
+
+    const keywords = ["diagnosis","procedure","treatment","patient","history",
+                      "therapy","medication","symptoms","prescribed","condition"];
+    if (!keywords.some(w => notes.toLowerCase().includes(w))) {
+        setBanner("error", "⚠ Notes must mention medical content.");
+        return;
+    }
+
+    const token = localStorage.getItem("token");
+    if (!token) { window.location.href = "auth.html"; return; }
+
+    btn.disabled = true;
+    btn.textContent = "⏳ Analyzing…";
+    setBanner("loading", "🤖 AI is extracting fields… please wait.");
+
+    try {
+        const res = await fetch(`${API}/api/notes/analyze`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + token
+            },
+            body: JSON.stringify({ note: notes })
+        });
+
+        const data = await res.json();
+        console.log("AI Response:", data);
+
+        if (!res.ok) {
+            setBanner("error", "⚠ " + extractError(data));
+            return;
+        }
+
+        // ── Fill all AI-extractable fields ────────────────────────
+        // Medical info
+        fill("medication",    data.procedure);
+        fill("diagnosis",     data.diagnosis);
+        fill("frequency",     data.frequency);
+        fill("cpt",           data.cpt);
+        fill("strength",      data.strength || "");
+        fill("therapyLength", data.therapy_length || "");
+        fill("quantity",      data.quantity || "");
+
+        // Clinical necessity
+        fill("history",  data.medical_necessity);
+        fill("failed",   data.failed);
+
+        // Patient info from notes (if extracted by LLM)
+        fill("fname",         data.patient_first_name || "");
+        fill("lname",         data.patient_last_name  || "");
+        fill("allergies",     data.allergies          || "");
+        fill("heightWeight",  data.height_weight      || "");
+
+        // Prescriber info from notes (if extracted)
+        fill("prescriberFname", data.prescriber_first || "");
+        fill("prescriberLname", data.prescriber_last  || "");
+        fill("npi",             data.npi              || "");
+
+        // Rationale
+        fill("rationaleDetail", data.rationale || "");
+
+        setBanner("success", "✅ AI auto-fill complete! Green fields were filled. Review before submitting.");
+
+    } catch (error) {
+        console.error("AI Error:", error);
+        setBanner("error", "⚠ Cannot connect to AI server. Is the backend running?");
+    } finally {
+        btn.disabled = false;
+        btn.textContent = "✨ Auto-Fill Using AI";
+    }
+}
+
+// ── SUBMIT FORM ──────────────────────────────────────────────────
+async function submitForm() {
+    const token = localStorage.getItem("token");
+    if (!token) { window.location.href = "auth.html"; return; }
+
+    const medication = document.getElementById("medication").value.trim();
+    const diagnosis  = document.getElementById("diagnosis").value.trim();
+
+    if (!medication || !diagnosis) {
+        alert("⚠ Medication and Diagnosis are required.");
+        return;
+    }
+
+    const btn = document.getElementById("submitBtn");
+    btn.disabled = true;
+    btn.textContent = "⏳ Submitting…";
+
+    try {
+        const formData = {
+            medication:   medication,
+            diagnosis:    diagnosis,
+            history:      document.getElementById("history").value,
+            frequency:    document.getElementById("frequency").value,
+            cpt:          document.getElementById("cpt").value,
+            failed:       document.getElementById("failed").value,
+            created_at:   new Date().toISOString()
+        };
+
+        const res = await fetch(`${API}/api/pa/save`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + token
+            },
+            body: JSON.stringify(formData)
+        });
+
+        const result = await res.json();
+
+        if (!res.ok) {
+            // ✅ FIX: extractError handles [object Object]
+            alert("❌ " + extractError(result));
+            return;
+        }
+
+        const paId = result.pa_id || null;
+        alert("✅ PA Submitted Successfully!" + (paId ? "\nPA ID: " + paId : ""));
+
+        // Offer to view status
+        if (paId && confirm("View your PA status now?")) {
+            window.location.href = `pa_status.html?id=${paId}`;
+        } else {
+            window.location.href = "pa_list.html";
+        }
+
+    } catch (error) {
+        console.error("Submit Error:", error);
+        alert("⚠ Submission failed. Check your connection.");
+    } finally {
+        btn.disabled = false;
+        btn.textContent = "📤 Submit PA Request";
+    }
+}
+
+// ── NAVIGATION ───────────────────────────────────────────────────
+function goBack() {
+    if (document.referrer) {
+        history.back();
+    } else {
+        window.location.href = "dashboard.html";
+    }
+}
+
+function viewMyForms() {
+    window.location.href = "pa_list.html";
+}
+
+function logoutAndGo() {
+    const token = localStorage.getItem("token");
+    if (token) {
+        fetch(`${API}/api/auth/logout`, {
+            method: "POST",
+            headers: { Authorization: "Bearer " + token }
+        }).catch(() => {});
+    }
+    localStorage.clear();
+    window.location.href = "auth.html";
+}
+
+// ── CLEAR FORM ───────────────────────────────────────────────────
+function clearForm() {
+    if (!confirm("Clear all form fields?")) return;
+    document.querySelectorAll("input:not([type=radio]):not([type=checkbox]), textarea")
+        .forEach(el => { el.value = ""; el.classList.remove("ai-filled"); });
+    document.getElementById("aiBanner").style.display = "none";
+    clearSig();
+}
+
+// ── FILE INPUT ───────────────────────────────────────────────────
+document.getElementById("fileInput").addEventListener("change", function() {
+    document.getElementById("fileList").innerHTML =
+        Array.from(this.files)
+             .map(f => `📄 ${f.name} <span style="color:#94A3B8;">(${(f.size/1024).toFixed(1)} KB)</span>`)
+             .join("<br>");
+});
+
+// ── SIGNATURE ────────────────────────────────────────────────────
+const canvas  = document.getElementById("sig");
+const ctx     = canvas.getContext("2d");
+let drawing   = false;
+
+canvas.addEventListener("mousedown", e => { drawing=true; ctx.beginPath(); ctx.moveTo(e.offsetX,e.offsetY); });
+canvas.addEventListener("mouseup",   () => { drawing=false; });
+canvas.addEventListener("mouseleave",() => { drawing=false; });
+canvas.addEventListener("mousemove", e => {
+    if (!drawing) return;
+    ctx.lineWidth=2; ctx.lineCap="round"; ctx.strokeStyle="#0F3C88";
+    ctx.lineTo(e.offsetX,e.offsetY); ctx.stroke();
+});
+
+// Touch support
+canvas.addEventListener("touchstart", e => {
+    e.preventDefault();
+    const r=canvas.getBoundingClientRect(), t=e.touches[0];
+    drawing=true; ctx.beginPath(); ctx.moveTo(t.clientX-r.left,t.clientY-r.top);
+});
+canvas.addEventListener("touchmove", e => {
+    e.preventDefault(); if(!drawing) return;
+    const r=canvas.getBoundingClientRect(), t=e.touches[0];
+    ctx.lineWidth=2; ctx.lineCap="round"; ctx.strokeStyle="#0F3C88";
+    ctx.lineTo(t.clientX-r.left,t.clientY-r.top); ctx.stroke();
+});
+canvas.addEventListener("touchend", () => { drawing=false; });
+
+function clearSig() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+// ── AUTH GUARD ───────────────────────────────────────────────────
+window.onload = function() {
+    if (!localStorage.getItem("token")) {
+        window.location.href = "auth.html";
+    }
 };
-
-function clearSig(){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-}
 </script>
-
 </body>
 </html>
