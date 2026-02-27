@@ -76,7 +76,7 @@ input, textarea, select {
   font-family:inherit; font-size:14px;
   transition: border-color .2s, background .2s;
 }
-input:focus, textarea:focus {
+input:focus, textarea:focus, select:focus {
   outline:none; border-color:var(--primary);
   box-shadow:0 0 0 3px rgba(15,60,136,.1);
 }
@@ -154,7 +154,6 @@ canvas {
 <div class="topbar">
   <button class="btn-top" onclick="goBack()">← Back</button>
   <div class="title">📋 Prior Authorization Form</div>
-  
   <button class="btn-top" onclick="logoutAndGo()">Logout</button>
 </div>
 
@@ -198,9 +197,9 @@ canvas {
     </div>
     <label style="margin-top:12px;">Sex</label>
     <div class="radio-group">
-      <label><input type="radio" name="sex" value="female"> Female</label>
-      <label><input type="radio" name="sex" value="male"> Male</label>
-      <label><input type="radio" name="sex" value="other"> Other</label>
+      <label><input type="radio" name="sex" value="Female"> Female</label>
+      <label><input type="radio" name="sex" value="Male"> Male</label>
+      <label><input type="radio" name="sex" value="Other"> Other</label>
     </div>
   </div>
 </div>
@@ -234,8 +233,8 @@ canvas {
 
     <label>Is this a new prescription?</label>
     <div class="radio-group">
-      <label><input type="radio" name="newrx"> Yes</label>
-      <label><input type="radio" name="newrx"> No</label>
+      <label><input type="radio" name="newrx" value="Yes"> Yes</label>
+      <label><input type="radio" name="newrx" value="No"> No</label>
     </div>
 
     <div class="grid" style="margin-top:12px;">
@@ -266,8 +265,8 @@ canvas {
 
     <label>Urgency</label>
     <div class="radio-group">
-      <label><input type="radio" name="urgency" value="standard"> Standard</label>
-      <label><input type="radio" name="urgency" value="urgent"> Urgent</label>
+      <label><input type="radio" name="urgency" value="Standard"> Standard</label>
+      <label><input type="radio" name="urgency" value="Urgent"> Urgent</label>
     </div>
   </div>
 </div>
@@ -276,12 +275,12 @@ canvas {
 <div class="section">
   <div class="section-header" onclick="toggle(this)">Rationale for Exception Request ⌄</div>
   <div class="section-body">
-    <div class="checkbox-group">
-      <label><input type="checkbox"> Adverse outcome with alternatives</label>
-      <label><input type="checkbox"> Complex chronic condition</label>
-      <label><input type="checkbox"> Higher dosage required</label>
-      <label><input type="checkbox"> Formulary exception</label>
-      <label><input type="checkbox"> Other</label>
+    <div class="checkbox-group" style="flex-direction:column;gap:8px;">
+      <label><input type="checkbox" name="reason" value="Adverse outcome with alternatives"> Adverse outcome with alternatives</label>
+      <label><input type="checkbox" name="reason" value="Complex chronic condition"> Complex chronic condition</label>
+      <label><input type="checkbox" name="reason" value="Higher dosage required"> Higher dosage required</label>
+      <label><input type="checkbox" name="reason" value="Formulary exception"> Formulary exception</label>
+      <label><input type="checkbox" name="reason" value="Other"> Other</label>
     </div>
     <textarea id="rationaleDetail" placeholder="Explain in detail" style="margin-top:12px;"></textarea>
   </div>
@@ -326,7 +325,6 @@ canvas {
 <!-- ================= BOTTOM NAV ================= -->
 <div class="bottom-nav">
   <button class="btn btn-secondary" onclick="goBack()">← Back to Dashboard</button>
-  
 </div>
 
 </div><!-- end card -->
@@ -336,7 +334,6 @@ canvas {
 const API = "http://127.0.0.1:8000";
 
 // ── Helper: extract readable error ──────────────────────────────
-// Fixes [object Object] — FastAPI detail can be array, string, or object
 function extractError(data) {
     if (!data) return "Unknown error";
     if (Array.isArray(data.detail))
@@ -409,35 +406,78 @@ async function autoFillFromLLM() {
             return;
         }
 
-        // ── Fill all AI-extractable fields ────────────────────────
-        // Medical info
-        fill("medication",    data.procedure);
-        fill("diagnosis",     data.diagnosis);
-        fill("frequency",     data.frequency);
-        fill("cpt",           data.cpt);
-        fill("strength",      data.strength || "");
-        fill("therapyLength", data.therapy_length || "");
-        fill("quantity",      data.quantity || "");
+        // ── Medical fields ────────────────────────────────────────
+        fill("medication",    data.medication    || data.drug_name  || data.procedure || "");
+        fill("diagnosis",     data.diagnosis     || data.icd10      || "");
+        fill("frequency",     data.frequency     || data.dosing     || "");
+        fill("cpt",           data.cpt           || data.cpt_code   || "");
+        fill("strength",      data.strength      || data.route      || "");
+        fill("therapyLength", data.therapy_length|| data.duration   || "");
+        fill("quantity",      data.quantity      || "");
 
-        // Clinical necessity
-        fill("history",  data.medical_necessity);
-        fill("failed",   data.failed);
+        // ── Clinical necessity ────────────────────────────────────
+        fill("history",       data.history       || data.medical_necessity || data.clinical_history || "");
+        fill("failed",        data.failed        || data.failed_treatments || data.prior_treatments || "");
 
-        // Patient info from notes (if extracted by LLM)
-        fill("fname",         data.patient_first_name || "");
-        fill("lname",         data.patient_last_name  || "");
-        fill("allergies",     data.allergies          || "");
-        fill("heightWeight",  data.height_weight      || "");
+        // ── Patient info ──────────────────────────────────────────
+        fill("fname",        data.patient_first_name || "");
+        fill("lname",        data.patient_last_name  || "");
+        fill("allergies",    data.allergies          || data.drug_allergies || "");
+        fill("heightWeight", data.height_weight      || "");
+        fill("pemail",       data.patient_email      || "");
+        fill("phone",        data.patient_phone      || "");
+        fill("memberId",     data.member_id          || "");
 
-        // Prescriber info from notes (if extracted)
+        // ── Address ───────────────────────────────────────────────
+        fill("addr1",        data.address            || "");
+        fill("city",         data.city               || "");
+        fill("state",        data.state              || "");
+        fill("zip",          data.zip                || "");
+
+        // ── Sex radio ────────────────────────────────────────────
+        if (data.sex || data.gender) {
+            const sv = (data.sex || data.gender || "").toLowerCase();
+            document.querySelectorAll("input[name='sex']").forEach(r => {
+                if (r.value.toLowerCase() === sv ||
+                    (sv.includes("female") && r.value === "Female") ||
+                    (sv.includes("male")   && r.value === "Male")) {
+                    r.checked = true;
+                }
+            });
+        }
+
+        // ── Prescriber info ───────────────────────────────────────
         fill("prescriberFname", data.prescriber_first || "");
         fill("prescriberLname", data.prescriber_last  || "");
-        fill("npi",             data.npi              || "");
+        fill("npi",             data.npi              || data.npi_number || "");
+        fill("officePhone",     data.office_phone     || "");
+        fill("officeFax",       data.office_fax       || "");
 
-        // Rationale
+        // ── Urgency radio ─────────────────────────────────────────
+        if (data.urgency) {
+            const uv = data.urgency.toLowerCase();
+            document.querySelectorAll("input[name='urgency']").forEach(r => {
+                if (r.value.toLowerCase() === uv ||
+                    (uv.includes("urgent") && r.value === "Urgent")) {
+                    r.checked = true;
+                }
+            });
+        }
+
+        // ── Rationale checkboxes ──────────────────────────────────
+        if (data.reasons) {
+            const reasons = data.reasons.toLowerCase();
+            document.querySelectorAll("input[name='reason']").forEach(cb => {
+                if (reasons.includes(cb.value.toLowerCase())) {
+                    cb.checked = true;
+                }
+            });
+        }
         fill("rationaleDetail", data.rationale || "");
 
-        setBanner("success", "✅ AI auto-fill complete! Green fields were filled. Review before submitting.");
+        // Count filled
+        const filledCount = document.querySelectorAll(".ai-filled").length;
+        setBanner("success", `✅ AI auto-fill complete! ${filledCount} fields filled. Green fields were auto-filled — review before submitting.`);
 
     } catch (error) {
         console.error("AI Error:", error);
@@ -465,17 +505,58 @@ async function submitForm() {
     btn.disabled = true;
     btn.textContent = "⏳ Submitting…";
 
-    try {
-        const formData = {
-            medication:   medication,
-            diagnosis:    diagnosis,
-            history:      document.getElementById("history").value,
-            frequency:    document.getElementById("frequency").value,
-            cpt:          document.getElementById("cpt").value,
-            failed:       document.getElementById("failed").value,
-            created_at:   new Date().toISOString()
-        };
+    // ── Collect all reasons checked ───────────────────────────────
+    const reasons = [...document.querySelectorAll("input[name='reason']:checked")]
+        .map(cb => cb.value).join(", ");
 
+    // ── Build full payload ────────────────────────────────────────
+    const formData = {
+        // Core fields (backend required)
+        medication:   medication,
+        diagnosis:    diagnosis,
+        history:      document.getElementById("history").value.trim(),
+        frequency:    document.getElementById("frequency").value.trim(),
+        cpt:          document.getElementById("cpt").value.trim(),
+        failed:       document.getElementById("failed").value.trim(),
+        created_at:   new Date().toISOString(),
+        // Legacy compat
+        procedure:         medication,
+        medical_necessity: document.getElementById("history").value.trim(),
+        // Extended medication
+        strength:          document.getElementById("strength").value.trim(),
+        therapy_length:    document.getElementById("therapyLength").value.trim(),
+        quantity:          document.getElementById("quantity").value.trim(),
+        height_weight:     document.getElementById("heightWeight").value.trim(),
+        allergies:         document.getElementById("allergies").value.trim(),
+        urgency:           document.querySelector("input[name='urgency']:checked")?.value || "Standard",
+        new_prescription:  document.querySelector("input[name='newrx']:checked")?.value || "",
+        start_date:        document.getElementById("startDate").value,
+        reasons:           reasons,
+        rationale_detail:  document.getElementById("rationaleDetail").value.trim(),
+        // Patient info
+        patient_first_name: document.getElementById("fname").value.trim(),
+        patient_last_name:  document.getElementById("lname").value.trim(),
+        patient_dob:        document.getElementById("dob").value,
+        patient_sex:        document.querySelector("input[name='sex']:checked")?.value || "",
+        patient_phone:      document.getElementById("phone").value.trim(),
+        patient_email:      document.getElementById("pemail").value.trim(),
+        patient_address:    [
+            document.getElementById("addr1").value.trim(),
+            document.getElementById("addr2").value.trim(),
+            document.getElementById("city").value.trim(),
+            document.getElementById("state").value.trim(),
+            document.getElementById("zip").value.trim()
+        ].filter(Boolean).join(", "),
+        member_id:          document.getElementById("memberId").value.trim(),
+        // Prescriber info
+        prescriber_first:   document.getElementById("prescriberFname").value.trim(),
+        prescriber_last:    document.getElementById("prescriberLname").value.trim(),
+        npi:                document.getElementById("npi").value.trim(),
+        office_phone:       document.getElementById("officePhone").value.trim(),
+        office_fax:         document.getElementById("officeFax").value.trim(),
+    };
+
+    try {
         const res = await fetch(`${API}/api/pa/save`, {
             method: "POST",
             headers: {
@@ -488,7 +569,6 @@ async function submitForm() {
         const result = await res.json();
 
         if (!res.ok) {
-            // ✅ FIX: extractError handles [object Object]
             alert("❌ " + extractError(result));
             return;
         }
@@ -496,7 +576,6 @@ async function submitForm() {
         const paId = result.pa_id || null;
         alert("✅ PA Submitted Successfully!" + (paId ? "\nPA ID: " + paId : ""));
 
-        // Offer to view status
         if (paId && confirm("View your PA status now?")) {
             window.location.href = `pa_status.html?id=${paId}`;
         } else {
@@ -514,15 +593,8 @@ async function submitForm() {
 
 // ── NAVIGATION ───────────────────────────────────────────────────
 function goBack() {
-    if (document.referrer) {
-        history.back();
-    } else {
-        window.location.href = "dashboard.html";
-    }
-}
-
-function viewMyForms() {
-    window.location.href = "pa_list.html";
+    if (document.referrer) history.back();
+    else window.location.href = "dashboard.html";
 }
 
 function logoutAndGo() {
@@ -542,6 +614,8 @@ function clearForm() {
     if (!confirm("Clear all form fields?")) return;
     document.querySelectorAll("input:not([type=radio]):not([type=checkbox]), textarea")
         .forEach(el => { el.value = ""; el.classList.remove("ai-filled"); });
+    document.querySelectorAll("input[type=radio], input[type=checkbox]")
+        .forEach(el => el.checked = false);
     document.getElementById("aiBanner").style.display = "none";
     clearSig();
 }

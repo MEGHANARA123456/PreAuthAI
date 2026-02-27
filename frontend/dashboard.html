@@ -4,583 +4,655 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Prior Authorization Dashboard</title>
-
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-/* ---------------- Global ---------------- */
-body{margin:0;font-family:Poppins, sans-serif;background:#F6FBFF;color:#333;}
-.hidden{display:none;}
+/* ══════════════ RESET & BASE ══════════════ */
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:Poppins,sans-serif;background:#F0F5FF;color:#1E293B;min-height:100vh;}
+.hidden{display:none!important;}
 
-/* ---------------- Navbar ---------------- */
+/* ══════════════ NAVBAR ══════════════ */
 .top-nav{display:flex;justify-content:space-between;align-items:center;
-background:#007BFF;padding:15px 40px;color:white;}
-.logo{font-size:20px;font-weight:600;}
-.top-nav nav a{color:white;text-decoration:none;margin:0 12px;font-weight:500;}
-.top-nav nav a:hover,.active{text-decoration:underline;}
+  background:linear-gradient(135deg,#0F3C88,#1A56CC);
+  padding:14px 36px;color:white;box-shadow:0 2px 16px rgba(15,60,136,.3);}
+.logo{font-size:18px;font-weight:700;letter-spacing:-.3px;}
+.top-nav nav{display:flex;align-items:center;gap:4px;}
+.top-nav nav a{color:rgba(255,255,255,.85);text-decoration:none;padding:7px 14px;
+  border-radius:7px;font-size:13px;font-weight:500;transition:.2s;}
+.top-nav nav a:hover{background:rgba(255,255,255,.15);color:white;}
+.nav-logout{background:rgba(220,38,38,.2)!important;color:#FCA5A5!important;}
+.nav-logout:hover{background:rgba(220,38,38,.4)!important;color:white!important;}
 
-/* ---------------- Hero Section ---------------- */
-.hero{display:flex;align-items:center;padding:55px;background:linear-gradient(to right,#E9F6FF,#D8EFFF);}
-.hero h1{font-size:36px;margin:0 0 10px;}
-.hero button{margin-top:20px;padding:12px 20px;border:none;border-radius:6px;
-background:#007BFF;color:white;font-size:16px;cursor:pointer;}
-.hero button:hover{background:#005FCC;}
-.hero img{width:330px;margin-left:auto;}
+/* ══════════════ HERO ══════════════ */
+.hero{padding:36px 40px;background:linear-gradient(135deg,#E8F0FF 0%,#D1E4FF 100%);
+  display:flex;align-items:center;border-bottom:1px solid #C7D9F8;}
+.hero-text h1{font-size:28px;font-weight:700;color:#0F3C88;margin-bottom:4px;}
+.hero-text p{font-size:14px;color:#475569;}
+.role-badge{display:inline-block;padding:3px 12px;border-radius:20px;font-size:11px;
+  font-weight:700;letter-spacing:.5px;margin-top:6px;}
+.role-admin{background:#FEE2E2;color:#991B1B;}
+.role-manager{background:#DBEAFE;color:#1D4ED8;}
+.role-user{background:#DCFCE7;color:#15803D;}
+.hero-actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;}
+.hero img{width:160px;margin-left:auto;opacity:.85;}
 
-/* ---------------- Panels ---------------- */
-.panel{padding:25px;margin:20px auto;background:white;border-radius:10px;width:92%;
-box-shadow:0 4px 15px rgba(0,0,0,.1);}
+/* ══════════════ BUTTONS ══════════════ */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border:none;
+  border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;
+  transition:.2s;text-decoration:none;}
+.btn:hover{opacity:.88;transform:translateY(-1px);}
+.btn-primary{background:#0F3C88;color:white;}
+.btn-blue{background:#2563EB;color:white;}
+.btn-green{background:#16A34A;color:white;}
+.btn-purple{background:#7C3AED;color:white;}
+.btn-red{background:#DC2626;color:white;}
+.btn-gray{background:#64748B;color:white;}
+.btn-outline{background:white;color:#0F3C88;border:1.5px solid #0F3C88;}
+.btn-sm{padding:5px 12px;font-size:12px;}
 
-#adminPanel button,#managerPanel button{
-padding:10px;margin:6px;border:none;
-background:#005FCC;color:white;border-radius:5px;cursor:pointer;
-}
-#adminPanel button:hover,#managerPanel button:hover{background:#003F9E;}
+/* ══════════════ PANEL ══════════════ */
+.panel{padding:28px 32px;margin:20px auto;background:white;border-radius:14px;
+  width:94%;max-width:1300px;box-shadow:0 2px 16px rgba(15,60,136,.08);}
+.panel-title{font-size:17px;font-weight:700;color:#0F3C88;margin-bottom:18px;
+  display:flex;align-items:center;gap:8px;}
 
-#logBox{
-background:#F1F6FF;
-padding:10px;
-margin-top:10px;
-border-radius:5px;
-height:120px;
-overflow-y:auto;
-font-size:13px;
-}
+/* ══════════════ STATS ROW ══════════════ */
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:24px;}
+.stat-card{background:linear-gradient(135deg,#EFF6FF,#DBEAFE);border-radius:12px;
+  padding:18px 20px;text-align:center;border:1px solid #BFDBFE;}
+.stat-card .icon{font-size:22px;margin-bottom:4px;}
+.stat-card .num{font-size:30px;font-weight:700;color:#0F3C88;line-height:1;}
+.stat-card .lbl{font-size:11px;color:#64748B;margin-top:4px;font-weight:500;}
+.stat-card.green{background:linear-gradient(135deg,#F0FDF4,#DCFCE7);border-color:#BBF7D0;}
+.stat-card.green .num{color:#16A34A;}
+.stat-card.red{background:linear-gradient(135deg,#FFF5F5,#FEE2E2);border-color:#FECACA;}
+.stat-card.red .num{color:#DC2626;}
+.stat-card.purple{background:linear-gradient(135deg,#F5F3FF,#EDE9FE);border-color:#DDD6FE;}
+.stat-card.purple .num{color:#7C3AED;}
 
-/* ---------------- Analytics ---------------- */
-.analytics{
-display:flex;
-gap:15px;
-flex-wrap:wrap;
-margin-top:15px;
-}
-.stat{
-background:#E9F3FF;
-padding:16px;
-border-radius:10px;
-width:200px;
-text-align:center;
-font-weight:600;
-}
-.stat span{
-font-size:28px;
-font-weight:700;
-color:#007BFF;
-display:block;
-margin-top:6px;
-}
+/* ══════════════ SECTION HEADER ══════════════ */
+.section-hdr{display:flex;align-items:center;justify-content:space-between;
+  margin:22px 0 12px;flex-wrap:wrap;gap:10px;}
+.section-hdr h3{font-size:15px;font-weight:700;color:#1E293B;display:flex;align-items:center;gap:6px;}
 
-/* ---------------- Live dot ---------------- */
-.live-dot{
-display:inline-block;
-width:9px;height:9px;border-radius:50%;
-background:#28a745;margin-right:6px;
-animation:pulse 2s infinite;
-}
-@keyframes pulse{
-0%,100%{box-shadow:0 0 0 0 rgba(40,167,69,.5);}
-50%{box-shadow:0 0 0 6px rgba(40,167,69,0);}
-}
+/* ══════════════ FILTER BAR ══════════════ */
+.filter-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px;}
+.filter-bar input,.filter-bar select{
+  padding:8px 13px;border:1.5px solid #CBD5E1;border-radius:8px;
+  font-size:13px;font-family:inherit;background:white;outline:none;transition:.2s;}
+.filter-bar input{width:230px;}
+.filter-bar input:focus,.filter-bar select:focus{border-color:#0F3C88;}
 
-/* ---------------- Cards ---------------- */
-.benefits{text-align:center;margin-top:40px;}
-.cards{display:flex;gap:15px;flex-wrap:wrap;justify-content:center;padding:25px;}
-.card{background:#fff;padding:18px;border-radius:12px;width:230px;
-box-shadow:0 4px 14px rgba(0,0,0,.08);text-align:center;}
+/* ══════════════ TABLE ══════════════ */
+.tbl-wrap{overflow-x:auto;border-radius:10px;border:1px solid #E2E8F0;}
+.pa-tbl{width:100%;border-collapse:collapse;font-size:13px;}
+.pa-tbl thead tr{background:linear-gradient(90deg,#0F3C88,#1A56CC);}
+.pa-tbl thead th{color:white;padding:11px 14px;text-align:left;font-weight:600;font-size:12px;white-space:nowrap;}
+.pa-tbl tbody tr{border-bottom:1px solid #F1F5F9;transition:background .15s;}
+.pa-tbl tbody tr:hover{background:#F8FAFC;}
+.pa-tbl tbody td{padding:11px 14px;vertical-align:middle;}
+.no-data{text-align:center;padding:40px;color:#94A3B8;font-size:14px;}
 
-/* ---------------- Footer ---------------- */
-footer{margin-top:40px;background:#007BFF;color:white;text-align:center;padding:12px;}
+/* ══════════════ BADGES ══════════════ */
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.3px;}
+.badge-APPROVED{background:#DCFCE7;color:#15803D;}
+.badge-REJECTED{background:#FEE2E2;color:#991B1B;}
+.badge-DRAFT{background:#FEF9C3;color:#854D0E;}
+.badge-active{background:#DCFCE7;color:#15803D;}
+.badge-closed{background:#F1F5F9;color:#64748B;}
 
-/* ---------------- Error text ---------------- */
-.err{color:red;font-size:13px;padding:8px;}
+/* ══════════════ ACTION BTNS ══════════════ */
+.act-wrap{display:flex;gap:4px;flex-wrap:nowrap;}
+
+/* ══════════════ LOG BOX ══════════════ */
+.log-box{background:#0F172A;border-radius:10px;padding:14px 16px;
+  height:180px;overflow-y:auto;font-size:12px;font-family:monospace;
+  border:1px solid #1E3A5F;}
+.log-line{padding:3px 0;border-bottom:1px solid #1E293B;display:flex;gap:10px;align-items:baseline;}
+.log-time{color:#38BDF8;flex-shrink:0;font-size:11px;}
+.log-action{color:#34D399;font-weight:700;flex-shrink:0;}
+.log-user{color:#FCD34D;flex-shrink:0;}
+.log-msg{color:#CBD5E1;}
+.log-empty{color:#475569;font-style:italic;padding:20px;text-align:center;}
+
+/* ══════════════ MODAL ══════════════ */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1000;
+  display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px);}
+.modal{background:white;border-radius:14px;padding:28px;width:90%;max-width:500px;
+  box-shadow:0 25px 60px rgba(0,0,0,.25);animation:fadeIn .2s;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:none}}
+.modal-title{font-size:17px;font-weight:700;color:#0F3C88;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+.modal label{display:block;font-size:11px;font-weight:700;color:#64748B;text-transform:uppercase;
+  letter-spacing:.5px;margin-bottom:4px;margin-top:14px;}
+.modal input,.modal textarea,.modal select{width:100%;padding:10px 13px;border:1.5px solid #CBD5E1;
+  border-radius:8px;font-size:13px;font-family:inherit;outline:none;transition:.2s;box-sizing:border-box;}
+.modal input:focus,.modal textarea:focus{border-color:#0F3C88;}
+.modal textarea{height:80px;resize:vertical;}
+.modal-btns{display:flex;gap:10px;margin-top:20px;justify-content:flex-end;flex-wrap:wrap;}
+
+.pa-detail-box{background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;
+  padding:12px 14px;font-size:13px;margin:4px 0 8px;}
+.pa-detail-box .row{display:flex;gap:8px;margin-bottom:4px;}
+.pa-detail-box .lbl{color:#64748B;font-weight:600;min-width:110px;font-size:12px;}
+.pa-detail-box .val{color:#1E293B;}
+
+/* ══════════════ LIVE DOT ══════════════ */
+.live-dot{display:inline-block;width:8px;height:8px;border-radius:50%;
+  background:#22C55E;animation:pulse 2s infinite;margin-right:6px;}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,.5);}50%{box-shadow:0 0 0 5px rgba(34,197,94,0);}}
+
+/* ══════════════ BENEFITS / FOOTER ══════════════ */
+.benefits{text-align:center;margin-top:30px;}
+.benefits h2{font-size:20px;font-weight:700;color:#0F3C88;margin-bottom:6px;}
+.cards-row{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;padding:18px 24px 30px;}
+.card{background:white;padding:18px 20px;border-radius:12px;min-width:180px;
+  box-shadow:0 3px 12px rgba(15,60,136,.08);text-align:center;font-weight:600;font-size:14px;
+  border:1px solid #E8F0FF;}
+footer{background:linear-gradient(135deg,#0F3C88,#1A56CC);color:white;
+  text-align:center;padding:14px;font-size:13px;}
+
+/* ══════════════ USER PANEL ══════════════ */
+.user-quick{display:flex;gap:12px;flex-wrap:wrap;margin-top:16px;}
 </style>
 </head>
-
 <body>
 
-<!--================= Navbar =================-->
+<!-- ═══════════ NAVBAR ═══════════ -->
 <header class="top-nav">
   <div class="logo">🩺 Prior Authorization Portal</div>
   <nav>
-    <a class="active">Dashboard</a>
-    <a href="pa_form.html">Create PA</a>
-    <a href="pdf_viewer.html">Forms pdf</a>
-
-    <a href="#" onclick="logout()">Logout</a>
+    <a href="pa_form.html">➕ Create PA</a>
+    <a href="pa_list.html">📋 My Forms</a>
+    <a id="navAdmin" href="#" class="hidden" onclick="scrollTo(0,400)">🛠 Admin</a>
+    <a href="#" class="nav-logout" onclick="logout()">Logout</a>
   </nav>
 </header>
 
-<!--================= Hero =================-->
+<!-- ═══════════ HERO ═══════════ -->
 <section class="hero">
-  <div>
-    <h1>Welcome <span id="username">User</span> 👋</h1>
-    <p>Your role: <b id="roleText"></b></p>
-    <button onclick="location.href='pa_form.html'">➕ New PA Request</button>
+  <div class="hero-text">
+    <h1>Welcome, <span id="username">User</span> 👋</h1>
+    <p>Prior Authorization Management Portal</p>
+    <div><span class="role-badge" id="roleBadge">USER</span></div>
+    <div class="hero-actions">
+      <button class="btn btn-primary" onclick="location.href='pa_form.html'">➕ New PA Request</button>
+      <button class="btn btn-outline" onclick="location.href='pa_list.html'">📋 My PA Forms</button>
+    </div>
   </div>
   <img src="https://cdn-icons-png.flaticon.com/512/5234/5234315.png">
 </section>
 
-<!--================= USER PANEL =================-->
-<div id="userPanel" class="panel">
-  <h2>User Panel</h2>
-  <p>You can upload SOAP notes &amp; generate PA forms.</p>
+<!-- ═══════════ USER PANEL ═══════════ -->
+<div id="userPanel" class="panel hidden">
+  <div class="panel-title">👤 User Panel</div>
+  <p style="color:#64748B;font-size:14px;">Upload clinical notes &amp; generate Prior Authorization forms using AI auto-fill.</p>
+  <div class="user-quick">
+    <button class="btn btn-primary" onclick="location.href='pa_form.html'">📄 New PA Request</button>
+    <button class="btn btn-outline" onclick="location.href='pa_list.html'">📋 View My Forms</button>
+  </div>
 </div>
 
-<!--================= MANAGER PANEL =================-->
+<!-- ═══════════ MANAGER PANEL ═══════════ -->
 <div id="managerPanel" class="panel hidden">
-  <h2>Manager Panel</h2>
-  <button onclick="location.href='pa_form.html'">📄 Create / Edit PA Forms</button>
-  <button onclick="location.href='pdf_viewer.html'">📥 Download Approved Forms</button>
-  <button onclick="location.href='manager_pa_list.html'">📥 View All PA Forms</button>
+  <div class="panel-title">📊 Manager Panel</div>
+
+  <!-- Quick actions -->
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;">
+    <button class="btn btn-primary"  onclick="location.href='pa_form.html'">📄 New PA Request</button>
+    <button class="btn btn-blue"     onclick="location.href='manager_pa_list.html'">📋 All PA Forms</button>
+    <button class="btn btn-purple"   onclick="openPAIdModal()">🔍 Open by ID</button>
+    <button class="btn btn-gray btn-sm" onclick="loadMgrForms()">🔄 Refresh</button>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row" id="mgrStats">
+    <div class="stat-card"><div class="icon">📄</div><div class="num" id="mgrTotal">—</div><div class="lbl">Total Forms</div></div>
+    <div class="stat-card green"><div class="icon">✅</div><div class="num" id="mgrApproved">—</div><div class="lbl">Approved</div></div>
+    <div class="stat-card red"><div class="icon">❌</div><div class="num" id="mgrRejected">—</div><div class="lbl">Rejected</div></div>
+    <div class="stat-card" style="background:linear-gradient(135deg,#FFFBEB,#FEF3C7);border-color:#FDE68A;">
+      <div class="icon">⏳</div><div class="num" style="color:#D97706;" id="mgrDraft">—</div><div class="lbl">Pending</div></div>
+  </div>
+
+  <!-- Filter + Table -->
+  <div class="section-hdr">
+    <h3>📋 All Submitted PA Forms</h3>
+  </div>
+  <div class="filter-bar">
+    <input id="mgrSearch" placeholder="🔍 Search medication, user…" oninput="renderMgrTable()">
+    <select id="mgrFilter" onchange="renderMgrTable()">
+      <option value="">All Statuses</option>
+      <option value="DRAFT">Draft / Pending</option>
+      <option value="APPROVED">Approved</option>
+      <option value="REJECTED">Rejected</option>
+    </select>
+  </div>
+  <div class="tbl-wrap"><div id="mgrTableBody"><p class="no-data">Loading…</p></div></div>
 </div>
 
-<!--================= ADMIN PANEL =================-->
+<!-- ═══════════ ADMIN PANEL ═══════════ -->
 <div id="adminPanel" class="panel hidden">
+  <div class="panel-title">🛠 Admin Dashboard</div>
 
-  <h2>🛠 Admin Dashboard</h2>
-
-  <!-- ================= ANALYTICS ================= -->
-  <div class="analytics">
-
-    <div class="stat">
-      👥 Users
-      <span id="statUsers">—</span>
-    </div>
-
-    <div class="stat">
-      📄 PA Requests
-      <span id="statPA">—</span>
-    </div>
-
-    <div class="stat">
-      ✅ Approved
-      <span id="statApproved">—</span>
-    </div>
-
-    <!-- NEW: live session count stat -->
-    <div class="stat">
-      🟢 Live Sessions
-      <span id="statSessions">—</span>
-    </div>
-
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card"><div class="icon">👥</div><div class="num" id="statUsers">—</div><div class="lbl">Total Users</div></div>
+    <div class="stat-card"><div class="icon">📄</div><div class="num" id="statPA">—</div><div class="lbl">PA Forms</div></div>
+    <div class="stat-card green"><div class="icon">✅</div><div class="num" id="statApproved">—</div><div class="lbl">Approved</div></div>
+    <div class="stat-card red"><div class="icon">❌</div><div class="num" id="statRejected">—</div><div class="lbl">Rejected</div></div>
+    <div class="stat-card purple"><div class="icon">🟢</div><div class="num" id="statSessions">—</div><div class="lbl">Live Sessions</div></div>
   </div>
 
-
-  <!-- ================= USERS TABLE ================= -->
-  <h3 style="margin-top:25px;">👥 Users</h3>
-
-  <button onclick="loadUsers()" style="
-      padding:8px 15px;
-      background:#007BFF;
-      color:white;
-      border:none;
-      border-radius:6px;
-      cursor:pointer;
-      margin-bottom:10px;">
-      🔄 Refresh Users
-  </button>
-
-  <table style="width:100%; border-collapse:collapse; margin-bottom:20px;">
-    <thead>
-      <tr style="background:#007BFF;color:white;">
-        <th style="padding:8px;">Email</th>
-        <th>Username</th>
-        <th>Role</th>
-        <th>Created</th>
-      </tr>
-    </thead>
-    <tbody id="usersTable">
-      <tr><td colspan="4" style="padding:10px;color:#888;">Loading…</td></tr>
-    </tbody>
-  </table>
-
-
-  <!-- ================= LOGIN LOGS ================= -->
-  <h3>📜 Login Logs
-    <span style="font-size:12px;font-weight:400;color:#888;margin-left:8px;">auto-refreshes every 30s</span>
-  </h3>
-
-  <button onclick="loadLogs()" style="
-      padding:8px 15px;
-      background:#6c757d;
-      color:white;
-      border:none;
-      border-radius:6px;
-      cursor:pointer;
-      margin-bottom:10px;">
-      🔄 Refresh Logs
-  </button>
-
-  <div id="logBox" style="
-      background:#F1F6FF;
-      padding:10px;
-      border-radius:5px;
-      height:150px;
-      overflow-y:auto;
-      margin-bottom:20px;
-      font-size:13px;">
-      Fetching logs…
+  <!-- Admin quick actions -->
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:22px;">
+    <button class="btn btn-primary" onclick="location.href='pa_form.html'">📄 New PA Request</button>
+    <button class="btn btn-blue"    onclick="location.href='pa_list.html'">📋 All PA Forms</button>
+    <button class="btn btn-purple"  onclick="openPAIdModal()">🔍 Open by ID</button>
+    <button class="btn btn-gray btn-sm" onclick="loadAdminForms();loadAnalytics();loadUsers();loadLogs();loadSessions()">🔄 Refresh All</button>
   </div>
 
+  <!-- ── PA FORMS TABLE (ADMIN) ── -->
+  <div class="section-hdr">
+    <h3>📋 PA Forms — Review &amp; Approve</h3>
+  </div>
+  <div class="filter-bar">
+    <input id="adminSearch" placeholder="🔍 Search medication, user…" oninput="renderAdminTable()">
+    <select id="adminFilter" onchange="renderAdminTable()">
+      <option value="">All Statuses</option>
+      <option value="DRAFT">Draft / Pending</option>
+      <option value="APPROVED">Approved</option>
+      <option value="REJECTED">Rejected</option>
+    </select>
+  </div>
+  <div class="tbl-wrap"><div id="adminTableBody"><p class="no-data">Loading…</p></div></div>
 
-  <!-- ================= SESSION MONITOR ================= -->
-  <h3>
-    <span class="live-dot"></span>Live User Sessions
-    <span style="font-size:12px;font-weight:400;color:#888;margin-left:8px;">auto-refreshes every 5s</span>
-  </h3>
+  <!-- ── USERS TABLE ── -->
+  <div class="section-hdr" style="margin-top:28px;">
+    <h3>👥 Registered Users</h3>
+    <button class="btn btn-outline btn-sm" onclick="loadUsers()">🔄 Refresh</button>
+  </div>
+  <div class="tbl-wrap">
+    <table class="pa-tbl">
+      <thead><tr>
+        <th>Email</th><th>Username</th><th>Role</th><th>Registered</th>
+      </tr></thead>
+      <tbody id="usersTable"><tr><td colspan="4" class="no-data">Loading…</td></tr></tbody>
+    </table>
+  </div>
 
-  <button onclick="loadSessions()" style="
-      padding:8px 15px;
-      background:#28a745;
-      color:white;
-      border:none;
-      border-radius:6px;
-      cursor:pointer;
-      margin-bottom:10px;">
-      🔄 Refresh Sessions
-  </button>
+  <!-- ── LOGIN LOGS ── -->
+  <div class="section-hdr" style="margin-top:28px;">
+    <h3>📜 Activity Logs</h3>
+    <button class="btn btn-gray btn-sm" onclick="loadLogs()">🔄 Refresh</button>
+  </div>
+  <div class="log-box" id="logBox"><div class="log-empty">Fetching logs…</div></div>
 
-  <table style="width:100%; border-collapse:collapse;">
-    <thead>
-      <tr style="background:#007BFF;color:white;">
-        <th style="padding:8px;">User</th>
-        <th>Role</th>
-        <th>IP</th>
-        <th>Device</th>
-        <th>Login Time</th>
-        <th>Status</th>
-        <th>Action</th>
-      </tr>
-    </thead>
-    <tbody id="sessionTableBody">
-      <tr><td colspan="7" style="padding:10px;color:#888;">Loading…</td></tr>
-    </tbody>
-  </table>
-
+  <!-- ── SESSIONS ── -->
+  <div class="section-hdr" style="margin-top:28px;">
+    <h3><span class="live-dot"></span>Live Sessions <span style="font-size:11px;font-weight:400;color:#94A3B8;">auto-refreshes every 5s</span></h3>
+    <button class="btn btn-green btn-sm" onclick="loadSessions()">🔄 Refresh</button>
+  </div>
+  <div class="tbl-wrap">
+    <table class="pa-tbl">
+      <thead><tr>
+        <th>User</th><th>Role</th><th>IP</th><th>Device</th><th>Login Time</th><th>Status</th><th>Action</th>
+      </tr></thead>
+      <tbody id="sessionTableBody"><tr><td colspan="7" class="no-data">Loading…</td></tr></tbody>
+    </table>
+  </div>
 </div>
 
-<!--================= Benefits =================-->
+<!-- ═══════════ BENEFITS ═══════════ -->
 <section class="benefits">
   <h2>Insurance Benefits</h2>
-  <div class="cards">
+  <div class="cards-row">
     <div class="card">💰 Cost Saving</div>
     <div class="card">🤖 AI Auto-Fill PA</div>
     <div class="card">📄 Export PDF</div>
     <div class="card">⏳ Track Status</div>
   </div>
 </section>
-
 <footer>© 2026 Prior Authorization System | Medical AI Assistant</footer>
 
+<!-- ══════════════════════════════════
+     MODALS
+══════════════════════════════════ -->
+
+<!-- Open by ID modal -->
+<div id="paIdModal" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-title">🔍 Open PA Form by ID</div>
+    <label>PA Form ID</label>
+    <input id="paIdInput" placeholder="e.g. 699ea0925d69ae21d325146e" style="font-family:monospace;font-size:12px;">
+    <div class="modal-btns">
+      <button class="btn btn-gray" onclick="closePAIdModal()">Cancel</button>
+      <button class="btn btn-blue" onclick="openById()">👁 View Status</button>
+      <button class="btn btn-purple" onclick="openPDFById()">📄 View PDF</button>
+    </div>
+  </div>
+</div>
+
+<!-- Approve/Reject modal -->
+<div id="reviewModal" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-title" id="reviewModalTitle">✅ Review PA Form</div>
+    <div class="pa-detail-box" id="reviewPADetails"><em style="color:#94A3B8;">Loading…</em></div>
+    <label>Your Name (Reviewer)</label>
+    <input id="reviewerName" placeholder="e.g. Dr. Admin">
+    <label>Comments <span style="font-weight:400;text-transform:none;">(optional)</span></label>
+    <textarea id="reviewComments" placeholder="Reason for approval or rejection…"></textarea>
+    <div class="modal-btns">
+      <button class="btn btn-gray"  onclick="closeReviewModal()">Cancel</button>
+      <button class="btn btn-red"   onclick="submitDecision('REJECTED')">❌ Reject</button>
+      <button class="btn btn-green" onclick="submitDecision('APPROVED')">✅ Approve</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════ -->
 <script>
-
 const API = "http://127.0.0.1:8000";
+let currentRole = "";
+let mgrForms    = [];
+let adminForms  = [];
+let reviewingId = "";
 
-// ================= INIT DASHBOARD =================
-async function initDashboard(){
+// ═══════════ INIT ═══════════
+async function initDashboard() {
+  const token = localStorage.getItem("token");
+  if (!token) { window.location.href = "auth.html"; return; }
+  try {
+    const res  = await fetch(`${API}/api/auth/me`, { headers:{ Authorization:`Bearer ${token}` } });
+    if (!res.ok) { localStorage.removeItem("token"); window.location.href = "auth.html"; return; }
+    const user = await res.json();
+    currentRole = user.role;
 
-    const token = localStorage.getItem("token");
+    document.getElementById("username").textContent = user.email.split("@")[0];
 
-    if(!token){
-        window.location.href = "auth.html";
-        return;
+    // Role badge
+    const rb = document.getElementById("roleBadge");
+    rb.textContent = currentRole.toUpperCase();
+    rb.className   = `role-badge role-${currentRole}`;
+
+    // Admin nav link
+    if (currentRole === "admin") document.getElementById("navAdmin").classList.remove("hidden");
+
+    ["adminPanel","managerPanel","userPanel"].forEach(id => document.getElementById(id).classList.add("hidden"));
+
+    if (currentRole === "admin") {
+      document.getElementById("adminPanel").classList.remove("hidden");
+      loadAnalytics(); loadAdminForms(); loadUsers(); loadLogs(); loadSessions();
+    } else if (currentRole === "manager") {
+      document.getElementById("managerPanel").classList.remove("hidden");
+      loadMgrForms();
+    } else {
+      document.getElementById("userPanel").classList.remove("hidden");
     }
-
-    try{
-
-        const res = await fetch(
-            `${API}/api/auth/me`,
-            { headers:{ Authorization:`Bearer ${token}` } }
-        );
-
-        if(!res.ok){
-            localStorage.removeItem("token");
-            window.location.href = "auth.html";
-            return;
-        }
-
-        const user = await res.json();
-        const role = user.role;
-
-        const adminPanel   = document.getElementById("adminPanel");
-        const managerPanel = document.getElementById("managerPanel");
-        const userPanel    = document.getElementById("userPanel");
-
-        document.getElementById("username").innerText = user.email;
-        document.getElementById("roleText").innerText = role.toUpperCase();
-
-        adminPanel.classList.add("hidden");
-        managerPanel.classList.add("hidden");
-        userPanel.classList.add("hidden");
-
-        if(role === "admin"){
-
-            adminPanel.classList.remove("hidden");
-
-            loadAnalytics();
-            loadUsers();     
-            loadLogs();
-            loadSessions();
-
-        } else if(role === "manager"){
-            managerPanel.classList.remove("hidden");
-        } else {
-            userPanel.classList.remove("hidden");
-        }
-
-    } catch(error){
-        console.error(error);
-        logout();
-    }
+  } catch(e) { console.error(e); logout(); }
 }
 
-
-// ================= LOAD ANALYTICS =================
-async function loadAnalytics(){
-
-    const token = localStorage.getItem("token");
-
-    try{
-
-        const res = await fetch(
-            `${API}/api/analytics/stats`,
-            { headers:{ Authorization:`Bearer ${token}` } }
-        );
-
-        if(!res.ok){
-            console.error("Analytics stats failed:", res.status);
-            return;
-        }
-
-        const data = await res.json();
-
-        document.getElementById("statUsers").innerText    = data.users    ?? "—";
-        document.getElementById("statPA").innerText       = data.pa_forms ?? "—";
-        document.getElementById("statApproved").innerText = data.approved ?? "—";
-
-    } catch(e){
-        console.error("loadAnalytics error:", e);
-    }
+// ═══════════ LOAD PA — MANAGER ═══════════
+async function loadMgrForms() {
+  document.getElementById("mgrTableBody").innerHTML = `<p class="no-data">Loading…</p>`;
+  const token = localStorage.getItem("token");
+  try {
+    const res = await fetch(`${API}/api/pa/all`, { headers:{ Authorization:`Bearer ${token}` } });
+    if (!res.ok) throw new Error(res.status);
+    mgrForms = await res.json();
+    // update mini stats
+    document.getElementById("mgrTotal").textContent    = mgrForms.length;
+    document.getElementById("mgrApproved").textContent = mgrForms.filter(f=>f.status==="APPROVED").length;
+    document.getElementById("mgrRejected").textContent = mgrForms.filter(f=>f.status==="REJECTED").length;
+    document.getElementById("mgrDraft").textContent    = mgrForms.filter(f=>f.status==="DRAFT").length;
+    renderMgrTable();
+  } catch(e) {
+    document.getElementById("mgrTableBody").innerHTML = `<p class="no-data" style="color:#DC2626;">⚠ Failed: ${e.message}</p>`;
+  }
 }
 
-
-// ================= LOAD USERS =================
-async function loadUsers(){
-
-    const token = localStorage.getItem("token");
-
-    try{
-
-        const res = await fetch(
-            `${API}/api/admin/users`,
-            { headers:{ Authorization:`Bearer ${token}` } }
-        );
-
-        const tbody = document.getElementById("usersTable");
-
-        if(!res.ok){
-            tbody.innerHTML = `<tr><td colspan="4" class="err">⚠ Failed to load users (${res.status})</td></tr>`;
-            return;
-        }
-
-        const users = await res.json();
-
-        if(!users.length){
-            tbody.innerHTML = `<tr><td colspan="4" style="padding:10px;color:#888;">No users found.</td></tr>`;
-            return;
-        }
-
-        tbody.innerHTML = "";
-
-        users.forEach(user => {
-
-            const roleColor =
-                user.role === "admin"   ? "red"     :
-                user.role === "manager" ? "#007BFF" : "green";
-
-            tbody.innerHTML += `
-            <tr>
-                <td style="padding:8px;border-bottom:1px solid #eee;">${user.email}</td>
-                <td style="border-bottom:1px solid #eee;">${user.username || "-"}</td>
-                <td style="color:${roleColor};font-weight:bold;border-bottom:1px solid #eee;">${user.role}</td>
-                <td style="border-bottom:1px solid #eee;">${user.created_at ? new Date(user.created_at).toLocaleString() : "-"}</td>
-            </tr>`;
-
-        });
-
-    } catch(error){
-        console.error("Users load error:", error);
-    }
+function renderMgrTable() {
+  const search = document.getElementById("mgrSearch").value.toLowerCase();
+  const filter = document.getElementById("mgrFilter").value;
+  const f = mgrForms.filter(x =>
+    (!search || (x.medication||"").toLowerCase().includes(search)||(x.created_by||"").toLowerCase().includes(search)) &&
+    (!filter || x.status === filter));
+  document.getElementById("mgrTableBody").innerHTML = f.length ? buildPATable(f,"manager") : `<p class="no-data">No forms match.</p>`;
 }
 
-
-// ================= LOAD LOGS =================
-async function loadLogs(){
-
-    const token = localStorage.getItem("token");
-    const logBox = document.getElementById("logBox");
-
-    try{
-
-        const res = await fetch(
-            `${API}/api/analytics/logs`,  //  route  works once router is registered
-            { headers:{ Authorization:`Bearer ${token}` } }
-        );
-
-        if(!res.ok){
-            logBox.innerHTML = `<span style="color:red;">⚠ Failed to load logs (${res.status}). Add analytics router to main.py.</span>`;
-            return;
-        }
-
-        const logs = await res.json();
-
-        if(!logs.length){
-            logBox.innerHTML = `<span style="color:#888;">No logs found.</span>`;
-            return;
-        }
-
-        logBox.innerHTML = "";
-
-        logs.forEach(log => {
-            logBox.innerHTML += `
-            <div style="margin-bottom:5px;">
-                🧾 <span style="color:#888;font-size:11px;">${log.time ? new Date(log.time).toLocaleTimeString() : ""}</span>
-                ${log.message}
-            </div>`;
-        });
-
-        // Scroll to latest log
-        logBox.scrollTop = logBox.scrollHeight;
-
-    } catch(e){
-        logBox.innerHTML = `<span style="color:red;">⚠ Error: ${e.message}</span>`;
-    }
+// ═══════════ LOAD PA — ADMIN ═══════════
+async function loadAdminForms() {
+  document.getElementById("adminTableBody").innerHTML = `<p class="no-data">Loading…</p>`;
+  const token = localStorage.getItem("token");
+  try {
+    const res = await fetch(`${API}/api/pa/all`, { headers:{ Authorization:`Bearer ${token}` } });
+    if (!res.ok) throw new Error(res.status);
+    adminForms = await res.json();
+    renderAdminTable();
+  } catch(e) {
+    document.getElementById("adminTableBody").innerHTML = `<p class="no-data" style="color:#DC2626;">⚠ Failed: ${e.message}</p>`;
+  }
 }
 
-
-// ================= LOAD SESSIONS =================
-async function loadSessions(){
-
-    const token = localStorage.getItem("token");
-
-    try{
-
-        const res = await fetch(
-            `${API}/api/auth/sessions`,
-            { headers:{ Authorization:`Bearer ${token}` } }
-        );
-
-        const tbody = document.getElementById("sessionTableBody");
-
-        if(!res.ok){
-            tbody.innerHTML = `<tr><td colspan="7" class="err">⚠ Failed to load sessions (${res.status})</td></tr>`;
-            return;
-        }
-
-        const sessions = await res.json();
-
-        // Update live session count in analytics stat card
-        const activeCount = sessions.filter(s => s.status === "active").length;
-        document.getElementById("statSessions").innerText = activeCount;
-
-        if(!sessions.length){
-            tbody.innerHTML = `<tr><td colspan="7" style="padding:10px;color:#888;">No sessions found.</td></tr>`;
-            return;
-        }
-
-        tbody.innerHTML = "";
-
-        sessions.forEach(session => {
-
-            const statusColor = session.status === "active" ? "green" : "red";
-
-            tbody.innerHTML += `
-            <tr>
-                <td style="padding:8px;">${session.email}</td>
-                <td>${session.role}</td>
-                <td>${session.ip || "-"}</td>
-                <td style="font-size:12px;">${session.user_agent?.substring(0,30) || "-"}</td>
-                <td style="font-size:12px;">${new Date(session.login_time).toLocaleString()}</td>
-                <td style="color:${statusColor};font-weight:bold;">${session.status}</td>
-                <td>
-                    ${session.status === "active"
-                        ? `<button onclick="forceLogout('${session.token}')"
-                            style="background:red;color:white;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;">
-                            Force Logout
-                           </button>`
-                        : "-"
-                    }
-                </td>
-            </tr>`;
-
-        });
-
-    } catch(error){
-        console.error("Session load error:", error);
-    }
+function renderAdminTable() {
+  const search = document.getElementById("adminSearch").value.toLowerCase();
+  const filter = document.getElementById("adminFilter").value;
+  const f = adminForms.filter(x =>
+    (!search || (x.medication||"").toLowerCase().includes(search)||(x.created_by||"").toLowerCase().includes(search)) &&
+    (!filter || x.status === filter));
+  document.getElementById("adminTableBody").innerHTML = f.length ? buildPATable(f,"admin") : `<p class="no-data">No forms match.</p>`;
 }
 
+// ═══════════ BUILD TABLE ═══════════
+function buildPATable(forms, role) {
+  let h = `<table class="pa-tbl"><thead><tr>
+    <th>#</th><th>Submitted By</th><th>Medication</th><th>Diagnosis</th>
+    <th>Status</th><th>Date</th><th>Actions</th>
+  </tr></thead><tbody>`;
 
-// ================= FORCE LOGOUT =================
-async function forceLogout(sessionToken){
+  forms.forEach((f,i) => {
+    const status  = (f.status||"DRAFT").toUpperCase();
+    const date    = f.created_at ? new Date(f.created_at).toLocaleDateString() : "—";
+    const id      = f._id;
+    const userTxt = (f.created_by||"—").substring(0,26);
+    const medTxt  = (f.medication||f.procedure||"—").substring(0,30);
+    const diagTxt = (f.diagnosis||"—").substring(0,35);
 
-    const adminToken = localStorage.getItem("token");
+    const viewBtn    = `<button class="btn btn-blue btn-sm" onclick="viewStatus('${id}')">👁</button>`;
+    const pdfBtn     = status==="APPROVED"
+      ? `<button class="btn btn-purple btn-sm" onclick="viewPDF('${id}')">📄</button>` : "";
+    const reviewBtn  = role==="admin"
+      ? `<button class="btn btn-sm ${status==="APPROVED"?"btn-gray":"btn-green"}" 
+           onclick="openReview('${id}')" title="${status==="APPROVED"?"Re-review":"Review"}">
+           ${status==="APPROVED"?"✏️":"✅"}</button>` : "";
 
-    if(!confirm("Force logout this session?")) return;
+    h += `<tr>
+      <td style="color:#94A3B8;font-size:11px;width:36px;">${i+1}</td>
+      <td style="font-size:12px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${f.created_by||''}">${userTxt}</td>
+      <td style="font-weight:600;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${f.medication||''}">${medTxt}</td>
+      <td style="font-size:12px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#475569;" title="${f.diagnosis||''}">${diagTxt}</td>
+      <td><span class="badge badge-${status}">${status}</span></td>
+      <td style="font-size:12px;color:#64748B;white-space:nowrap;">${date}</td>
+      <td><div class="act-wrap">${viewBtn}${reviewBtn}${pdfBtn}</div></td>
+    </tr>`;
+  });
 
-    try{
-
-        const res = await fetch(
-            `${API}/api/auth/sessions/force-logout/${sessionToken}`,
-            { method:"POST", headers:{ Authorization:`Bearer ${adminToken}` } }
-        );
-
-        alert(res.ok ? "✅ Session terminated." : "⚠ Failed to terminate session.");
-
-    } catch(e){
-        alert("⚠ Error: " + e.message);
-    }
-
-    loadSessions();
+  return h + `</tbody></table>`;
 }
 
+// ═══════════ OPEN BY ID MODAL ═══════════
+function openPAIdModal()  { document.getElementById("paIdInput").value=""; document.getElementById("paIdModal").classList.remove("hidden"); }
+function closePAIdModal() { document.getElementById("paIdModal").classList.add("hidden"); }
+function openById()       { const id=document.getElementById("paIdInput").value.trim(); if(id){closePAIdModal();viewStatus(id);} }
+function openPDFById()    { const id=document.getElementById("paIdInput").value.trim(); if(id){closePAIdModal();viewPDF(id);} }
 
-// ================= LOGOUT =================
-async function logout(){
+// ═══════════ REVIEW MODAL ═══════════
+async function openReview(paId) {
+  reviewingId = paId;
+  document.getElementById("reviewPADetails").innerHTML = `<em style="color:#94A3B8;">Loading…</em>`;
+  document.getElementById("reviewerName").value   = "";
+  document.getElementById("reviewComments").value = "";
+  document.getElementById("reviewModal").classList.remove("hidden");
 
-    const token = localStorage.getItem("token");
-
-    try{
-        await fetch(
-            `${API}/api/auth/logout`,
-            { method:"POST", headers:{ Authorization:`Bearer ${token}` } }
-        );
-    } catch(_){}
-
-    localStorage.clear();
-    window.location.href = "auth.html";
+  const token = localStorage.getItem("token");
+  try {
+    const res = await fetch(`${API}/api/pa/${paId}`, { headers:{ Authorization:`Bearer ${token}` } });
+    if (!res.ok) throw new Error();
+    const pa = await res.json();
+    document.getElementById("reviewModalTitle").textContent = `Review — ${(pa.medication||"PA Form").substring(0,30)}`;
+    document.getElementById("reviewPADetails").innerHTML = `
+      <div class="row"><span class="lbl">Medication:</span><span class="val">${pa.medication||"—"}</span></div>
+      <div class="row"><span class="lbl">Diagnosis:</span><span class="val">${(pa.diagnosis||"—").substring(0,60)}</span></div>
+      <div class="row"><span class="lbl">Submitted by:</span><span class="val">${pa.created_by||"—"}</span></div>
+      <div class="row"><span class="lbl">Current Status:</span><span class="val"><span class="badge badge-${pa.status||'DRAFT'}">${pa.status||"DRAFT"}</span></span></div>
+      ${pa.history?`<div class="row"><span class="lbl">History:</span><span class="val" style="font-size:12px;">${pa.history.substring(0,100)}…</span></div>`:""}
+    `;
+  } catch(_) {
+    document.getElementById("reviewPADetails").innerHTML = `<span style="color:#DC2626;">Could not load PA details.</span>`;
+  }
 }
 
+function closeReviewModal() { document.getElementById("reviewModal").classList.add("hidden"); reviewingId=""; }
 
-// ================= AUTO REFRESH =================
-// Sessions every 5s
-setInterval(() => {
-    if(document.getElementById("roleText").innerText === "ADMIN"){
-        loadSessions();
+async function submitDecision(decision) {
+  if (!reviewingId) return;
+  const reviewer = document.getElementById("reviewerName").value.trim();
+  const comments = document.getElementById("reviewComments").value.trim();
+  if (!reviewer) { alert("Please enter your reviewer name."); return; }
+
+  const token = localStorage.getItem("token");
+  try {
+    const res = await fetch(`${API}/api/pa/${reviewingId}/approve`, {
+      method:"POST",
+      headers:{ Authorization:`Bearer ${token}`, "Content-Type":"application/json" },
+      body: JSON.stringify({ reviewer, decision, comments })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(()=>({}));
+      alert(`⚠ Failed: ${err.detail||res.status}`); return;
     }
-}, 5000);
+    closeReviewModal();
+    alert(`✅ PA form ${decision==="APPROVED"?"approved":"rejected"} successfully!`);
+    loadAdminForms();
+    loadAnalytics();
+  } catch(e) { alert("⚠ "+e.message); }
+}
 
-// Stats + Logs every 30s
-setInterval(() => {
-    if(document.getElementById("roleText").innerText === "ADMIN"){
-        loadAnalytics();
-        loadLogs();
-    }
-}, 30000);
+// ═══════════ ANALYTICS ═══════════
+async function loadAnalytics() {
+  const token = localStorage.getItem("token");
+  try {
+    const res  = await fetch(`${API}/api/analytics/stats`, { headers:{ Authorization:`Bearer ${token}` } });
+    if (!res.ok) return;
+    const d = await res.json();
+    document.getElementById("statUsers").textContent    = d.users    ?? "—";
+    document.getElementById("statPA").textContent       = d.pa_forms ?? "—";
+    document.getElementById("statApproved").textContent = d.approved ?? "—";
+    document.getElementById("statRejected").textContent = d.rejected ?? "—";
+  } catch(e) { console.error(e); }
+}
 
+// ═══════════ USERS ═══════════
+async function loadUsers() {
+  const token = localStorage.getItem("token");
+  const tbody = document.getElementById("usersTable");
+  try {
+    const res   = await fetch(`${API}/api/admin/users`, { headers:{ Authorization:`Bearer ${token}` } });
+    if (!res.ok) { tbody.innerHTML=`<tr><td colspan="4" class="no-data" style="color:#DC2626;">⚠ Failed (${res.status})</td></tr>`; return; }
+    const users = await res.json();
+    if (!users.length) { tbody.innerHTML=`<tr><td colspan="4" class="no-data">No users found.</td></tr>`; return; }
+    tbody.innerHTML = "";
+    users.forEach(u => {
+      const rc = u.role==="admin"?"#DC2626":u.role==="manager"?"#2563EB":"#16A34A";
+      tbody.innerHTML += `<tr>
+        <td style="padding:10px 14px;">${u.email}</td>
+        <td style="padding:10px 14px;">${u.username||"—"}</td>
+        <td style="padding:10px 14px;color:${rc};font-weight:700;">${u.role}</td>
+        <td style="padding:10px 14px;color:#64748B;font-size:12px;">${u.created_at?new Date(u.created_at).toLocaleString():"—"}</td>
+      </tr>`;
+    });
+  } catch(e) { console.error(e); }
+}
 
-// ================= START =================
+// ═══════════ LOGS ═══════════
+async function loadLogs() {
+  const token  = localStorage.getItem("token");
+  const logBox = document.getElementById("logBox");
+  try {
+    const res  = await fetch(`${API}/api/analytics/logs`, { headers:{ Authorization:`Bearer ${token}` } });
+    if (!res.ok) { logBox.innerHTML=`<div class="log-empty" style="color:#F87171;">⚠ Failed (${res.status})</div>`; return; }
+    const logs = await res.json();
+    if (!logs.length) { logBox.innerHTML=`<div class="log-empty">No logs yet. Logs appear after login/PA events.</div>`; return; }
+    logBox.innerHTML = "";
+    logs.forEach(log => {
+      logBox.innerHTML += `
+        <div class="log-line">
+          <span class="log-time">${log.time?new Date(log.time).toLocaleTimeString():"—"}</span>
+          <span class="log-action">${log.action||"EVENT"}</span>
+          <span class="log-user">${log.user||""}</span>
+          <span class="log-msg">${log.message||""}</span>
+        </div>`;
+    });
+    logBox.scrollTop = logBox.scrollHeight;
+  } catch(e) { logBox.innerHTML=`<div class="log-empty" style="color:#F87171;">⚠ ${e.message}</div>`; }
+}
+
+// ═══════════ SESSIONS ═══════════
+async function loadSessions() {
+  const token = localStorage.getItem("token");
+  const tbody = document.getElementById("sessionTableBody");
+  try {
+    const res      = await fetch(`${API}/api/auth/sessions`, { headers:{ Authorization:`Bearer ${token}` } });
+    if (!res.ok) { tbody.innerHTML=`<tr><td colspan="7" class="no-data" style="color:#DC2626;">⚠ Failed (${res.status})</td></tr>`; return; }
+    const sessions = await res.json();
+    const activeCount = sessions.filter(s=>s.status==="active").length;
+    document.getElementById("statSessions").textContent = activeCount;
+    if (!sessions.length) { tbody.innerHTML=`<tr><td colspan="7" class="no-data">No sessions.</td></tr>`; return; }
+    tbody.innerHTML = "";
+    sessions.forEach(s => {
+      tbody.innerHTML += `<tr>
+        <td style="padding:10px 14px;">${s.email}</td>
+        <td>${s.role}</td>
+        <td style="font-size:12px;">${s.ip||"—"}</td>
+        <td style="font-size:11px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.user_agent?.substring(0,35)||"—"}</td>
+        <td style="font-size:12px;">${new Date(s.login_time).toLocaleString()}</td>
+        <td><span class="badge badge-${s.status}">${s.status}</span></td>
+        <td>${s.status==="active"
+          ?`<button class="btn btn-red btn-sm" onclick="forceLogout('${s.token}')">Force Logout</button>`
+          :"—"}</td>
+      </tr>`;
+    });
+  } catch(e) { console.error(e); }
+}
+
+async function forceLogout(sessionToken) {
+  if (!confirm("Force logout this session?")) return;
+  const adminToken = localStorage.getItem("token");
+  try {
+    const res = await fetch(`${API}/api/auth/sessions/force-logout/${sessionToken}`,
+      { method:"POST", headers:{ Authorization:`Bearer ${adminToken}` }});
+    alert(res.ok?"✅ Session terminated.":"⚠ Failed.");
+  } catch(e) { alert("⚠ "+e.message); }
+  loadSessions();
+}
+
+// ═══════════ NAVIGATION ═══════════
+function viewStatus(id) { window.location.href=`pa_status.html?id=${id}`; }
+function viewPDF(id)    { window.location.href=`pdf_viewer.html?id=${id}`; }
+
+// ═══════════ LOGOUT ═══════════
+async function logout() {
+  const token = localStorage.getItem("token");
+  try { await fetch(`${API}/api/auth/logout`,{method:"POST",headers:{Authorization:`Bearer ${token}`}}); } catch(_){}
+  localStorage.clear();
+  window.location.href = "auth.html";
+}
+
+// ═══════════ AUTO REFRESH ═══════════
+setInterval(()=>{ if(currentRole==="admin") loadSessions(); }, 5000);
+setInterval(()=>{ if(currentRole==="admin"){ loadAnalytics(); loadLogs(); } }, 30000);
+
 window.onload = initDashboard;
-
 </script>
-
 </body>
 </html>
