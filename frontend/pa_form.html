@@ -659,6 +659,22 @@ canvas.addEventListener("touchend", () => { drawing=false; });
 function clearSig() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
+function fill(id, value) {
+    if (!value) return;
+    const el = document.getElementById(id);
+    if (!el) return;
+
+    // Convert date formats to YYYY-MM-DD for date inputs
+    if (el.type === "date" && value) {
+        // Handle MM/DD/YYYY → YYYY-MM-DD
+        const mmddyyyy = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+        if (mmddyyyy) value = `${mmddyyyy[3]}-${mmddyyyy[1]}-${mmddyyyy[2]}`;
+    }
+
+    el.value = value;
+    el.classList.add("ai-filled");
+    setTimeout(() => el.classList.remove("ai-filled"), 4000);
+}
 
 // ── AUTH GUARD ───────────────────────────────────────────────────
 window.onload = function() {

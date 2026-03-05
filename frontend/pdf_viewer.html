@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PA Form Viewer</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -26,13 +27,7 @@ body {
   box-shadow: 0 2px 10px rgba(0,0,0,.2);
   flex-shrink: 0;
 }
-
-.toolbar .title {
-  font-size: 17px;
-  font-weight: 600;
-  flex: 1;
-}
-
+.toolbar .title { font-size: 17px; font-weight: 600; flex: 1; }
 .toolbar .pa-id {
   font-size: 12px;
   background: rgba(255,255,255,.15);
@@ -40,7 +35,6 @@ body {
   border-radius: 20px;
   font-family: monospace;
 }
-
 .btn {
   display: inline-flex;
   align-items: center;
@@ -56,7 +50,6 @@ body {
   text-decoration: none;
 }
 .btn:hover { opacity: .88; transform: translateY(-1px); }
-
 .btn-white   { background: white; color: #0F3C88; }
 .btn-green   { background: #16A34A; color: white; }
 .btn-outline { background: rgba(255,255,255,.12); color: white; border: 1px solid rgba(255,255,255,.3); }
@@ -117,7 +110,6 @@ body {
   gap: 14px;
 }
 .state.active { display: flex; }
-
 .state-icon { font-size: 52px; }
 .state h2   { font-size: 20px; font-weight: 700; color: #1E293B; }
 .state p    { font-size: 14px; color: #64748B; max-width: 400px; line-height: 1.6; }
@@ -143,6 +135,196 @@ body {
   flex-wrap: wrap;
 }
 .pa-info span { font-weight: 500; }
+
+/* ══════════════════════════════════════
+   USER STATUS CARD (only for role=user)
+══════════════════════════════════════ */
+#userStatusCard {
+  display: none;
+  padding: 40px 36px;
+  animation: fadeUp .35s ease;
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.status-card-inner {
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+/* Header row with big status badge */
+.status-card-header {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 28px;
+}
+.status-icon-circle {
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  flex-shrink: 0;
+}
+.status-icon-circle.approved { background: #DCFCE7; }
+.status-icon-circle.rejected { background: #FEE2E2; }
+.status-icon-circle.pending  { background: #FEF9C3; }
+
+.status-card-header-text h2 {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1E293B;
+  margin-bottom: 4px;
+}
+.status-card-header-text p {
+  font-size: 13px;
+  color: #64748B;
+}
+
+/* Large status pill */
+.big-status {
+  display: inline-block;
+  padding: 6px 20px;
+  border-radius: 30px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .5px;
+  margin-bottom: 28px;
+}
+.big-status.APPROVED { background: #DCFCE7; color: #15803D; border: 1.5px solid #86EFAC; }
+.big-status.REJECTED { background: #FEE2E2; color: #991B1B; border: 1.5px solid #FCA5A5; }
+.big-status.DRAFT    { background: #FEF9C3; color: #854D0E; border: 1.5px solid #FDE68A; }
+
+/* Info rows */
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.info-item {
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+.info-item .lbl {
+  font-size: 10px;
+  font-weight: 700;
+  color: #94A3B8;
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  margin-bottom: 5px;
+}
+.info-item .val {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1E293B;
+  word-break: break-word;
+}
+
+/* Reviewer note (shown when approved) */
+.reviewer-note {
+  background: #F0FDF4;
+  border: 1px solid #BBF7D0;
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 24px;
+  font-size: 13px;
+  color: #15803D;
+  display: none;
+}
+.reviewer-note .note-lbl {
+  font-weight: 700;
+  margin-bottom: 4px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+}
+
+/* Pending notice */
+.pending-notice {
+  background: #FFFBEB;
+  border: 1px solid #FDE68A;
+  border-radius: 10px;
+  padding: 14px 18px;
+  font-size: 13px;
+  color: #92400E;
+  margin-bottom: 24px;
+  display: none;
+  gap: 10px;
+  align-items: flex-start;
+}
+.pending-notice .notice-icon { font-size: 20px; flex-shrink: 0; }
+
+/* Rejected notice */
+.rejected-notice {
+  background: #FFF5F5;
+  border: 1px solid #FECACA;
+  border-radius: 10px;
+  padding: 14px 18px;
+  font-size: 13px;
+  color: #991B1B;
+  margin-bottom: 24px;
+  display: none;
+  gap: 10px;
+  align-items: flex-start;
+}
+.rejected-notice .notice-icon { font-size: 20px; flex-shrink: 0; }
+
+/* Download CTA block */
+.download-cta {
+  background: linear-gradient(135deg, #0F3C88, #1A56CC);
+  border-radius: 12px;
+  padding: 22px 24px;
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.download-cta .cta-text h3 { font-size: 15px; font-weight: 700; color: white; margin-bottom: 3px; }
+.download-cta .cta-text p  { font-size: 12px; color: rgba(255,255,255,.75); }
+.btn-download {
+  background: white;
+  color: #0F3C88;
+  padding: 10px 22px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 14px;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  transition: .2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.btn-download:hover { background: #EFF6FF; transform: translateY(-1px); }
+
+.back-row {
+  margin-top: 20px;
+  text-align: center;
+}
+.back-row button {
+  background: none;
+  border: 1.5px solid #CBD5E1;
+  color: #64748B;
+  padding: 8px 20px;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: .2s;
+}
+.back-row button:hover { border-color: #0F3C88; color: #0F3C88; background: #F0F5FF; }
 </style>
 </head>
 <body>
@@ -166,7 +348,7 @@ body {
     <span id="statusText">Loading PA form…</span>
   </div>
 
-  <!-- PA info strip (shown after load) -->
+  <!-- PA info strip (admin/manager only, shown after PDF load) -->
   <div class="pa-info" id="paInfo">
     Medication: <span id="infoMed">—</span> &nbsp;|&nbsp;
     Diagnosis: <span id="infoDiag">—</span> &nbsp;|&nbsp;
@@ -176,27 +358,19 @@ body {
   <!-- Loading state -->
   <div class="state active" id="stateLoading">
     <div class="spinner"></div>
-    <h2>Fetching PDF…</h2>
-    <p>Authenticating and retrieving your approved PA form.</p>
+    <h2>Loading…</h2>
+    <p>Fetching your PA form details.</p>
   </div>
 
   <!-- Error state -->
   <div class="state" id="stateError">
     <div class="state-icon">⚠️</div>
-    <h2 id="errTitle">Could Not Load PDF</h2>
+    <h2 id="errTitle">Could Not Load Form</h2>
     <p id="errMsg">An error occurred while loading the PA form.</p>
     <div style="display:flex;gap:10px;margin-top:8px;">
-      <button class="btn btn-white" style="background:#0F3C88;color:white;" onclick="loadPDF()">🔄 Retry</button>
+      <button class="btn btn-white" style="background:#0F3C88;color:white;" onclick="init()">🔄 Retry</button>
       <button class="btn btn-white" onclick="goBack()">← Go Back</button>
     </div>
-  </div>
-
-  <!-- Not approved state -->
-  <div class="state" id="stateNotApproved">
-    <div class="state-icon">🕐</div>
-    <h2>PA Not Yet Approved</h2>
-    <p>This Prior Authorization form hasn't been approved yet. PDFs are only available for approved forms. Check back after admin review.</p>
-    <button class="btn btn-white" style="background:#0F3C88;color:white;margin-top:8px;" onclick="goBack()">← Back to My Forms</button>
   </div>
 
   <!-- No ID state -->
@@ -207,38 +381,117 @@ body {
     <button class="btn btn-white" style="background:#0F3C88;color:white;margin-top:8px;" onclick="goBack()">← Back</button>
   </div>
 
-  <!-- PDF iframe (shown on success) -->
+  <!-- ════════════════════════════════════════
+       USER STATUS CARD  (role = user)
+  ════════════════════════════════════════ -->
+  <div id="userStatusCard">
+    <div class="status-card-inner">
+
+      <!-- Header -->
+      <div class="status-card-header">
+        <div class="status-icon-circle" id="uStatusIcon">⏳</div>
+        <div class="status-card-header-text">
+          <h2>Prior Authorization Status</h2>
+          <p id="uPaIdLine">PA Form ID: —</p>
+        </div>
+      </div>
+
+      <!-- Big status pill -->
+      <div class="big-status DRAFT" id="uBigStatus">PENDING REVIEW</div>
+
+      <!-- Info grid -->
+      <div class="info-grid">
+        <div class="info-item">
+          <div class="lbl">Medication / Procedure</div>
+          <div class="val" id="uMed">—</div>
+        </div>
+        <div class="info-item">
+          <div class="lbl">Diagnosis</div>
+          <div class="val" id="uDiag">—</div>
+        </div>
+        <div class="info-item">
+          <div class="lbl">Submitted By</div>
+          <div class="val" id="uCreatedBy">—</div>
+        </div>
+        <div class="info-item">
+          <div class="lbl">Date Submitted</div>
+          <div class="val" id="uDate">—</div>
+        </div>
+      </div>
+
+      <!-- Reviewer note (APPROVED only) -->
+      <div class="reviewer-note" id="uReviewerNote">
+        <div class="note-lbl">✅ Reviewer Notes</div>
+        <div id="uReviewerText">—</div>
+        <div style="margin-top:6px;font-size:12px;color:#16A34A;">
+          Reviewed by <strong id="uReviewer">—</strong> on <strong id="uReviewedAt">—</strong>
+        </div>
+      </div>
+
+      <!-- Pending notice (DRAFT only) -->
+      <div class="pending-notice" id="uPendingNotice" style="display:flex;">
+        <span class="notice-icon">🕐</span>
+        <div>
+          <strong>Your request is under review.</strong><br>
+          An admin will review your PA form shortly. You'll be able to download the approval document once it's approved.
+        </div>
+      </div>
+
+      <!-- Rejected notice (REJECTED only) -->
+      <div class="rejected-notice" id="uRejectedNotice">
+        <span class="notice-icon">❌</span>
+        <div>
+          <strong>This request was not approved.</strong><br>
+          <span id="uRejectedReason">Please contact your administrator for more information or submit a new PA request.</span>
+        </div>
+      </div>
+
+      <!-- Download CTA (APPROVED only) -->
+      <div class="download-cta" id="uDownloadCta">
+        <div class="cta-text">
+          <h3>📄 Approved PA Document Ready</h3>
+          <p>Your Prior Authorization form has been approved and is ready to download.</p>
+        </div>
+        <button class="btn-download" onclick="triggerUserDownload()">
+          ⬇ Download PDF
+        </button>
+      </div>
+
+      <div class="back-row">
+        <button onclick="goBack()">← Back to My Forms</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- PDF iframe (admin/manager only) -->
   <iframe id="pdfFrame" title="PA Form PDF"></iframe>
 
 </div>
 </div>
 
 <script>
-const API = `${location.protocol}//${location.hostname}:${location.port}/api`;
+const API    = `${location.protocol}//${location.hostname}:${location.port}/api`;
+const params = new URLSearchParams(location.search);
+const paId   = params.get("id");
+let   blobUrl = null;
+let   userRole = null;
 
-const params   = new URLSearchParams(location.search);
-const paId     = params.get("id");
-let   blobUrl  = null;
-
-// ── Helper: switch visible state ───────────────────────────────
+// ── Helper: switch visible state ──────────────────────────────────
 function showState(name) {
-  ["stateLoading","stateError","stateNotApproved","stateNoId"].forEach(id => {
+  ["stateLoading","stateError","stateNoId"].forEach(id => {
     document.getElementById(id).classList.remove("active");
   });
   if (name) document.getElementById(name).classList.add("active");
 }
 
 function setStatus(type, msg) {
-  const dot  = document.getElementById("statusDot");
-  const text = document.getElementById("statusText");
-  dot.className  = "dot " + type;
-  text.textContent = msg;
+  document.getElementById("statusDot").className  = "dot " + type;
+  document.getElementById("statusText").textContent = msg;
 }
 
-// ── Main load function ─────────────────────────────────────────
-async function loadPDF() {
-
-  // No ID in URL
+// ── Entry point ───────────────────────────────────────────────────
+async function init() {
   if (!paId) {
     showState("stateNoId");
     setStatus("err", "No PA ID in URL");
@@ -248,33 +501,201 @@ async function loadPDF() {
 
   document.getElementById("paIdLabel").textContent = "PA #" + paId;
 
-  // Auth check
   const token = localStorage.getItem("token");
-  if (!token) {
-    window.location.href = "auth.html";
-    return;
-  }
+  if (!token) { window.location.href = "auth.html"; return; }
 
   showState("stateLoading");
-  setStatus("loading", "Fetching PDF…");
+  setStatus("loading", "Loading…");
+
+  // ── Fetch current user role ───────────────────────────────────
+  try {
+    const meRes = await fetch(`${API}/auth/me`, {
+      headers: { Authorization: "Bearer " + token }
+    });
+    if (meRes.status === 401) { localStorage.removeItem("token"); window.location.href = "auth.html"; return; }
+    if (meRes.ok) {
+      const me = await meRes.json();
+      userRole = (me.role || "user").toLowerCase();
+    }
+  } catch(_) { userRole = "user"; }
+
+  if (userRole === "admin" || userRole === "manager") {
+    // ── Admin / Manager: load full PDF viewer ─────────────────
+    loadPDF(token);
+  } else {
+    // ── Regular user: show status card only ───────────────────
+    loadUserStatusCard(token);
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
+//  REGULAR USER — status card view
+// ════════════════════════════════════════════════════════════════
+async function loadUserStatusCard(token) {
+  try {
+    const res = await fetch(`${API}/pa/${paId}`, {
+      headers: { Authorization: "Bearer " + token }
+    });
+
+    if (res.status === 401) { localStorage.removeItem("token"); window.location.href = "auth.html"; return; }
+    if (res.status === 404) {
+      showState("stateError");
+      document.getElementById("errTitle").textContent = "PA Form Not Found";
+      document.getElementById("errMsg").textContent   = `No PA form found with ID: ${paId}`;
+      setStatus("err", "Not found (404)");
+      return;
+    }
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || `Server error ${res.status}`);
+    }
+
+    const pa     = await res.json();
+    const status = (pa.status || "DRAFT").toUpperCase();
+
+    // ── Populate fields ──────────────────────────────────────
+    document.getElementById("uPaIdLine").textContent   = "PA Form ID: " + paId;
+    document.getElementById("uMed").textContent        = pa.medication || pa.procedure || "—";
+    document.getElementById("uDiag").textContent       = pa.diagnosis  || "—";
+    document.getElementById("uCreatedBy").textContent  = pa.created_by || "—";
+
+    // Date
+    let dateStr = "—";
+    if (pa.created_at) {
+      try { dateStr = new Date(pa.created_at).toLocaleDateString("en-US",{year:"numeric",month:"short",day:"numeric"}); }
+      catch(_){}
+    }
+    document.getElementById("uDate").textContent = dateStr;
+
+    // Status icon & pill
+    const iconEl   = document.getElementById("uStatusIcon");
+    const pillEl   = document.getElementById("uBigStatus");
+
+    if (status === "APPROVED") {
+      iconEl.textContent  = "✅";
+      iconEl.className    = "status-icon-circle approved";
+      pillEl.textContent  = "✅  APPROVED";
+      pillEl.className    = "big-status APPROVED";
+    } else if (status === "REJECTED") {
+      iconEl.textContent  = "❌";
+      iconEl.className    = "status-icon-circle rejected";
+      pillEl.textContent  = "❌  REJECTED";
+      pillEl.className    = "big-status REJECTED";
+    } else {
+      iconEl.textContent  = "⏳";
+      iconEl.className    = "status-icon-circle pending";
+      pillEl.textContent  = "⏳  PENDING REVIEW";
+      pillEl.className    = "big-status DRAFT";
+    }
+
+    // ── Show / hide conditional sections ────────────────────
+    const pendingNotice  = document.getElementById("uPendingNotice");
+    const rejectedNotice = document.getElementById("uRejectedNotice");
+    const reviewerNote   = document.getElementById("uReviewerNote");
+    const downloadCta    = document.getElementById("uDownloadCta");
+
+    // Hide all first
+    pendingNotice.style.display  = "none";
+    rejectedNotice.style.display = "none";
+    reviewerNote.style.display   = "none";
+    downloadCta.style.display    = "none";
+
+    if (status === "APPROVED") {
+      // Show reviewer info
+      reviewerNote.style.display = "block";
+      document.getElementById("uReviewerText").textContent = pa.comments || "No additional comments.";
+      document.getElementById("uReviewer").textContent     = pa.reviewer  || "—";
+      let reviewedStr = "—";
+      if (pa.reviewed_at) {
+        try { reviewedStr = new Date(pa.reviewed_at).toLocaleDateString("en-US",{year:"numeric",month:"short",day:"numeric"}); }
+        catch(_){}
+      }
+      document.getElementById("uReviewedAt").textContent = reviewedStr;
+
+      // Show download CTA
+      downloadCta.style.display = "flex";
+
+      setStatus("ok", "PA form approved — ready to download");
+
+    } else if (status === "REJECTED") {
+      rejectedNotice.style.display = "flex";
+      if (pa.comments) {
+        document.getElementById("uRejectedReason").textContent = pa.comments;
+      }
+      setStatus("err", "PA form was rejected");
+
+    } else {
+      // DRAFT / pending
+      pendingNotice.style.display = "flex";
+      setStatus("loading", "PA form is pending admin review");
+    }
+
+    // ── Show the status card ─────────────────────────────────
+    showState(null);
+    document.getElementById("userStatusCard").style.display = "block";
+
+  } catch(err) {
+    console.error("Status load error:", err);
+    showState("stateError");
+    document.getElementById("errTitle").textContent = "Failed to Load Form";
+    document.getElementById("errMsg").textContent   = err.message || "Unknown error occurred.";
+    setStatus("err", "Error: " + err.message);
+  }
+}
+
+// Download PDF for user (fetches on demand)
+async function triggerUserDownload() {
+  const token = localStorage.getItem("token");
+  const btn   = document.querySelector(".btn-download");
+  btn.textContent = "⏳ Downloading…";
+  btn.disabled    = true;
 
   try {
-
-    // ── Fetch PDF as blob (iframe can't send auth headers) ──────
     const res = await fetch(`${API}/pa/${paId}/download`, {
       headers: { Authorization: "Bearer " + token }
     });
 
-    // ── Handle specific error codes ─────────────────────────────
-    if (res.status === 401) {
-      localStorage.removeItem("token");
-      window.location.href = "auth.html";
-      return;
-    }
+    if (res.status === 401) { localStorage.removeItem("token"); window.location.href = "auth.html"; return; }
+    if (res.status === 403) { alert("This form has not been approved yet."); return; }
+    if (!res.ok) { const e = await res.json().catch(()=>({})); throw new Error(e.detail || `Server error ${res.status}`); }
+
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement("a");
+    a.href     = url;
+    a.download = `PA_Form_${paId}.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    btn.innerHTML = "✅ Downloaded!";
+    setTimeout(() => { btn.innerHTML = "⬇ Download PDF"; btn.disabled = false; }, 3000);
+  } catch(err) {
+    alert("Download failed: " + err.message);
+    btn.innerHTML = "⬇ Download PDF";
+    btn.disabled  = false;
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
+//  ADMIN / MANAGER — full PDF viewer (original behavior)
+// ════════════════════════════════════════════════════════════════
+async function loadPDF(token) {
+  showState("stateLoading");
+  setStatus("loading", "Fetching PDF…");
+
+  try {
+    const res = await fetch(`${API}/pa/${paId}/download`, {
+      headers: { Authorization: "Bearer " + token }
+    });
+
+    if (res.status === 401) { localStorage.removeItem("token"); window.location.href = "auth.html"; return; }
 
     if (res.status === 403) {
-      showState("stateNotApproved");
+      // Not approved — still show status card for admin context
       setStatus("err", "PA not approved yet");
+      showState("stateError");
+      document.getElementById("errTitle").textContent = "PA Not Yet Approved";
+      document.getElementById("errMsg").textContent   = "This PA has not been approved. Approve it first to generate the PDF.";
       return;
     }
 
@@ -291,30 +712,32 @@ async function loadPDF() {
       throw new Error(err.detail || `Server error ${res.status}`);
     }
 
-    // ── Check content type is actually a PDF ────────────────────
     const contentType = res.headers.get("content-type") || "";
-    if (!contentType.includes("pdf")) {
-      throw new Error("Server did not return a PDF file.");
-    }
+    if (!contentType.includes("pdf")) throw new Error("Server did not return a PDF file.");
 
-    // ── Convert to blob URL so iframe can display it ────────────
     const blob = await res.blob();
-
-    // Revoke old blob URL if re-loading
     if (blobUrl) URL.revokeObjectURL(blobUrl);
     blobUrl = URL.createObjectURL(blob);
 
-    // Show iframe
     const frame = document.getElementById("pdfFrame");
     frame.src   = blobUrl;
     frame.style.display = "block";
-    showState(null); // hide all state overlays
+    showState(null);
 
     setStatus("ok", "PDF loaded successfully");
     document.getElementById("downloadBtn").style.display = "inline-flex";
 
-    // ── Also load PA metadata for the info strip ────────────────
-    loadPAInfo(token);
+    // Load info strip
+    const infoRes = await fetch(`${API}/pa/${paId}`, {
+      headers: { Authorization: "Bearer " + token }
+    });
+    if (infoRes.ok) {
+      const pa = await infoRes.json();
+      document.getElementById("infoMed").textContent    = pa.medication || "—";
+      document.getElementById("infoDiag").textContent   = pa.diagnosis  || "—";
+      document.getElementById("infoStatus").textContent = pa.status     || "—";
+      document.getElementById("paInfo").style.display   = "flex";
+    }
 
   } catch(err) {
     console.error("PDF load error:", err);
@@ -325,49 +748,28 @@ async function loadPDF() {
   }
 }
 
-// ── Load PA metadata for info strip ───────────────────────────
-async function loadPAInfo(token) {
-  try {
-    const res = await fetch(`${API}/pa/${paId}`, {
-      headers: { Authorization: "Bearer " + token }
-    });
-    if (!res.ok) return;
-
-    const pa = await res.json();
-
-    document.getElementById("infoMed").textContent    = pa.medication || "—";
-    document.getElementById("infoDiag").textContent   = pa.diagnosis  || "—";
-    document.getElementById("infoStatus").textContent = pa.status     || "—";
-    document.getElementById("paInfo").style.display   = "flex";
-
-  } catch(_) { /* non-critical, skip */ }
-}
-
-// ── Download PDF to disk ───────────────────────────────────────
+// ── Download PDF to disk (admin/manager toolbar button) ──────────
 function downloadPDF() {
   if (!blobUrl) return;
-  const a = document.createElement("a");
+  const a    = document.createElement("a");
   a.href     = blobUrl;
   a.download = `PA_Form_${paId}.pdf`;
   a.click();
 }
 
-// ── Back navigation ────────────────────────────────────────────
+// ── Back navigation ───────────────────────────────────────────────
 function goBack() {
-  if (document.referrer) {
-    history.back();
-  } else {
-    window.location.href = "pa_list.html";
-  }
+  if (document.referrer) { history.back(); }
+  else { window.location.href = "pa_list.html"; }
 }
 
-// ── Clean up blob URL on page leave ───────────────────────────
+// ── Clean up blob URL on page leave ──────────────────────────────
 window.addEventListener("beforeunload", () => {
   if (blobUrl) URL.revokeObjectURL(blobUrl);
 });
 
-// ── Start ──────────────────────────────────────────────────────
-loadPDF();
+// ── Start ─────────────────────────────────────────────────────────
+init();
 </script>
 </body>
 </html>
