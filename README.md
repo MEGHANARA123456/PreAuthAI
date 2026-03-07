@@ -108,7 +108,7 @@ Secure token-based authentication with bcrypt password hashing and role-enforced
 
 ```
 User Browser (Frontend)
-  auth.html | dashboard.html | pa_form.html | pa_list.html | pa_status.html | pdf_viewer.html
+  auth.html | dashboard.html | pa_form.html | pa_list.html | pdf_viewer.html
        |
        |  REST API calls (fetch / JSON)
        v
