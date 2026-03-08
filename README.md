@@ -94,7 +94,7 @@ Secure token-based authentication with bcrypt password hashing and role-enforced
 | **LLM Primary** | Groq — Llama-3.1-8B-Instant | Clinical notes analysis, field extraction |
 | **LLM Fallback** | Google Gemini 1.5 Pro | Automatic fallback provider |
 | **LLM Orchestration** | LangChain (`langchain-groq`, `langchain-google-genai`) | Unified LLM interface, provider switching |
-| **Database** | MongoDB (PyMongo) | NoSQL storage for PA records and users |
+| **Database** | MongoDB  | NoSQL storage for PA records and users |
 | **PDF Generation** | ReportLab | Server-side professional PDF creation |
 | **Authentication** | python-jose (JWT) + passlib (bcrypt) | Token auth, password hashing |
 | **Frontend** | HTML5, CSS3, Vanilla JavaScript | PA forms, dashboards, status pages |
@@ -190,7 +190,6 @@ pa-form-generator/
 │   ├── pa_list.html               # User's PA forms with status
 │   ├── pa_status.html             # Single PA detail + download
 │   ├── pdf_viewer.html            # In-browser PDF viewer
-│   ├── mock_data.html             # 6 clinical test scenarios
 │   ├── style.css                  # Global styles
 │   └── api.js                     # API helper functions
 │
