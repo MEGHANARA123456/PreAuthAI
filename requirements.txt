@@ -13,4 +13,4 @@ passlib[bcrypt]
 langchain
 langchain-aws
 langchain-google-genai
-python-dotenv
+
