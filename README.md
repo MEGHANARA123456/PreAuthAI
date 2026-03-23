@@ -20,6 +20,7 @@
 <img width="1206" height="401" alt="image" src="https://github.com/user-attachments/assets/ccefa1d1-5e06-440f-8038-62a99b6e4658" />
 <img width="499" height="501" alt="image" src="https://github.com/user-attachments/assets/c3da3aaf-4103-4e9a-8c6f-996ae8c70c7f" />
  </div> 
+
 ## Introduction
 
 **LLM-Based Prior Authorization Form Generator** is an AI-powered full-stack web application that automates the Prior Authorization (PA) workflow for healthcare providers. It uses Large Language Models (LLMs) to extract structured clinical data from unstructured SOAP notes, auto-populates 30+ field PA forms, manages the complete submission-review-approval lifecycle, and generates downloadable PDF reports for approved requests.
