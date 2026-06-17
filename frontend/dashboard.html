@@ -755,11 +755,68 @@ footer {
      JAVASCRIPT
 ══════════════════════════════════ -->
 <script>
-const API = "http://127.0.0.1:8000";
+const API = "http://127.0.0.1:8001";
 let currentRole = "";
 let mgrForms    = [];
 let adminForms  = [];
 let reviewingId = "";
+
+function ensureMessageStyles() {
+    if (document.getElementById("appMessageStyles")) return;
+    const style = document.createElement("style");
+    style.id = "appMessageStyles";
+    style.textContent = `
+      .app-message-wrapper{position:fixed;top:20px;right:20px;z-index:99999;display:flex;flex-direction:column;gap:12px;width:min(360px,calc(100vw - 32px));pointer-events:none;}
+      .app-message{pointer-events:auto;border-radius:14px;padding:14px 16px;min-width:0;box-shadow:0 20px 40px rgba(0,0,0,.14);color:#fff;font-size:13px;line-height:1.5;opacity:0;transform:translateY(-10px);transition:opacity .22s ease,transform .22s ease;cursor:pointer;}
+      .app-message.show{opacity:1;transform:translateY(0);}
+      .app-message.info{background:linear-gradient(135deg,#1A73E8,#4C8CFA);}
+      .app-message.success{background:linear-gradient(135deg,#16A34A,#34D399);}
+      .app-message.warning{background:linear-gradient(135deg,#F59E0B,#FBBF24);color:#1E2937;}
+      .app-message.error{background:linear-gradient(135deg,#DC2626,#F87171);}
+      .app-message .title{font-weight:700;margin-bottom:4px;}
+    `;
+    document.head.appendChild(style);
+}
+
+function getMessageContainer() {
+    let container = document.getElementById("appMessageContainer");
+    if (!container) {
+        container = document.createElement("div");
+        container.id = "appMessageContainer";
+        container.className = "app-message-wrapper";
+        document.body.appendChild(container);
+    }
+    return container;
+}
+
+function showAppMessage(type, message, duration = 5000) {
+    ensureMessageStyles();
+    const container = getMessageContainer();
+    const toast = document.createElement("div");
+    toast.className = `app-message ${type || "info"}`;
+    const title = type === "success" ? "Success" : type === "error" ? "Error" : type === "warning" ? "Warning" : "Info";
+    toast.innerHTML = `
+      <div class="title">${title}</div>
+      <div>${message}</div>
+    `;
+    container.prepend(toast);
+    requestAnimationFrame(() => toast.classList.add("show"));
+    const timeout = setTimeout(() => {
+        toast.classList.remove("show");
+        toast.addEventListener("transitionend", () => toast.remove(), { once: true });
+    }, duration);
+    toast.addEventListener("click", () => {
+        clearTimeout(timeout);
+        toast.classList.remove("show");
+        toast.addEventListener("transitionend", () => toast.remove(), { once: true });
+    });
+    return toast;
+}
+
+function showSuccess(message, duration) { return showAppMessage("success", message, duration); }
+function showError(message, duration) { return showAppMessage("error", message, duration); }
+function showWarning(message, duration) { return showAppMessage("warning", message, duration); }
+function showInfo(message, duration) { return showAppMessage("info", message, duration); }
 
 // ═══════════ INIT ═══════════
 async function initDashboard() {
@@ -772,20 +829,20 @@ async function initDashboard() {
     currentRole = user.role;
 
     document.getElementById("username").textContent = user.email.split("@")[0];
-
-    // Role badge
     const rb = document.getElementById("roleBadge");
     rb.textContent = currentRole.toUpperCase();
     rb.className   = `role-badge role-${currentRole}`;
 
-    // Admin nav link
     if (currentRole === "admin") document.getElementById("navAdmin").classList.remove("hidden");
 
     ["adminPanel","managerPanel","userPanel"].forEach(id => document.getElementById(id).classList.add("hidden"));
 
     if (currentRole === "admin") {
       document.getElementById("adminPanel").classList.remove("hidden");
-      loadAnalytics(); loadAdminForms(); loadUsers(); loadLogs(); loadSessions();
+      await loadAdminForms(); // single fetch — updates stats + table
+      loadUsers();
+      loadLogs();
+      loadSessions();
     } else if (currentRole === "manager") {
       document.getElementById("managerPanel").classList.remove("hidden");
       loadMgrForms();
@@ -793,6 +850,40 @@ async function initDashboard() {
       document.getElementById("userPanel").classList.remove("hidden");
     }
   } catch(e) { console.error(e); logout(); }
+}
+
+// ═══════════ LOAD PA — ADMIN (single fetch, updates stats + table) ═══════════
+async function loadAdminForms() {
+  document.getElementById("adminTableBody").innerHTML = `<p class="no-data">Loading…</p>`;
+  const token = localStorage.getItem("token");
+  try {
+    const res = await fetch(`${API}/api/pa/all`, { headers:{ Authorization:`Bearer ${token}` } });
+    if (!res.ok) throw new Error(res.status);
+    adminForms = await res.json();
+
+    // update all PA stat cards here — no separate analytics call needed
+    document.getElementById("statPA").textContent       = adminForms.length;
+    document.getElementById("statApproved").textContent = adminForms.filter(f => f.status === "APPROVED").length;
+    document.getElementById("statRejected").textContent = adminForms.filter(f => f.status === "REJECTED").length;
+
+    renderAdminTable();
+  } catch(e) {
+    document.getElementById("adminTableBody").innerHTML = `<p class="no-data" style="color:#DC2626;">⚠ Failed: ${e.message}</p>`;
+  }
+}
+
+// ═══════════ loadAnalytics — just calls loadAdminForms, no duplicate fetch ═══════════
+async function loadAnalytics() {
+  await loadAdminForms();
+}
+
+function renderAdminTable() {
+  const search = document.getElementById("adminSearch").value.toLowerCase();
+  const filter = document.getElementById("adminFilter").value;
+  const f = adminForms.filter(x =>
+    (!search || (x.medication||"").toLowerCase().includes(search)||(x.created_by||"").toLowerCase().includes(search)) &&
+    (!filter || x.status === filter));
+  document.getElementById("adminTableBody").innerHTML = f.length ? buildPATable(f,"admin") : `<p class="no-data">No forms match.</p>`;
 }
 
 // ═══════════ LOAD PA — MANAGER ═══════════
@@ -803,7 +894,6 @@ async function loadMgrForms() {
     const res = await fetch(`${API}/api/pa/all`, { headers:{ Authorization:`Bearer ${token}` } });
     if (!res.ok) throw new Error(res.status);
     mgrForms = await res.json();
-    // update mini stats
     document.getElementById("mgrTotal").textContent    = mgrForms.length;
     document.getElementById("mgrApproved").textContent = mgrForms.filter(f=>f.status==="APPROVED").length;
     document.getElementById("mgrRejected").textContent = mgrForms.filter(f=>f.status==="REJECTED").length;
@@ -823,29 +913,6 @@ function renderMgrTable() {
   document.getElementById("mgrTableBody").innerHTML = f.length ? buildPATable(f,"manager") : `<p class="no-data">No forms match.</p>`;
 }
 
-// ═══════════ LOAD PA — ADMIN ═══════════
-async function loadAdminForms() {
-  document.getElementById("adminTableBody").innerHTML = `<p class="no-data">Loading…</p>`;
-  const token = localStorage.getItem("token");
-  try {
-    const res = await fetch(`${API}/api/pa/all`, { headers:{ Authorization:`Bearer ${token}` } });
-    if (!res.ok) throw new Error(res.status);
-    adminForms = await res.json();
-    renderAdminTable();
-  } catch(e) {
-    document.getElementById("adminTableBody").innerHTML = `<p class="no-data" style="color:#DC2626;">⚠ Failed: ${e.message}</p>`;
-  }
-}
-
-function renderAdminTable() {
-  const search = document.getElementById("adminSearch").value.toLowerCase();
-  const filter = document.getElementById("adminFilter").value;
-  const f = adminForms.filter(x =>
-    (!search || (x.medication||"").toLowerCase().includes(search)||(x.created_by||"").toLowerCase().includes(search)) &&
-    (!filter || x.status === filter));
-  document.getElementById("adminTableBody").innerHTML = f.length ? buildPATable(f,"admin") : `<p class="no-data">No forms match.</p>`;
-}
-
 // ═══════════ BUILD TABLE ═══════════
 function buildPATable(forms, role) {
   let h = `<table class="pa-tbl"><thead><tr>
@@ -861,11 +928,11 @@ function buildPATable(forms, role) {
     const medTxt  = (f.medication||f.procedure||"—").substring(0,30);
     const diagTxt = (f.diagnosis||"—").substring(0,35);
 
-    const viewBtn    = `<button class="btn btn-blue btn-sm" onclick="viewStatus('${id}')">👁</button>`;
-    const pdfBtn     = status==="APPROVED"
+    const viewBtn   = `<button class="btn btn-blue btn-sm" onclick="viewStatus('${id}')">👁</button>`;
+    const pdfBtn    = status==="APPROVED"
       ? `<button class="btn btn-purple btn-sm" onclick="viewPDF('${id}')">📄</button>` : "";
-    const reviewBtn  = role==="admin"
-      ? `<button class="btn btn-sm ${status==="APPROVED"?"btn-gray":"btn-green"}" 
+    const reviewBtn = role==="admin"
+      ? `<button class="btn btn-sm ${status==="APPROVED"?"btn-gray":"btn-green"}"
            onclick="openReview('${id}')" title="${status==="APPROVED"?"Re-review":"Review"}">
            ${status==="APPROVED"?"✏️":"✅"}</button>` : "";
 
@@ -921,7 +988,7 @@ async function submitDecision(decision) {
   if (!reviewingId) return;
   const reviewer = document.getElementById("reviewerName").value.trim();
   const comments = document.getElementById("reviewComments").value.trim();
-  if (!reviewer) { alert("Please enter your reviewer name."); return; }
+  if (!reviewer) { showWarning("Please enter your reviewer name."); return; }
 
   const token = localStorage.getItem("token");
   try {
@@ -932,30 +999,15 @@ async function submitDecision(decision) {
     });
     if (!res.ok) {
       const err = await res.json().catch(()=>({}));
-      alert(`⚠ Failed: ${err.detail||res.status}`); return;
+      showError(`Failed: ${err.detail||res.status}`); return;
     }
     closeReviewModal();
-    alert(`✅ PA form ${decision==="APPROVED"?"approved":"rejected"} successfully!`);
-    loadAdminForms();
-    loadAnalytics();
-  } catch(e) { alert("⚠ "+e.message); }
+    showSuccess(`PA form ${decision==="APPROVED"?"approved":"rejected"} successfully!`);
+    await loadAdminForms(); // refresh table + stats together
+  } catch(e) { showError(e.message); }
 }
 
-// ═══════════ ANALYTICS ═══════════
-async function loadAnalytics() {
-  const token = localStorage.getItem("token");
-  try {
-    const res  = await fetch(`${API}/api/analytics/stats`, { headers:{ Authorization:`Bearer ${token}` } });
-    if (!res.ok) return;
-    const d = await res.json();
-    document.getElementById("statUsers").textContent    = d.users    ?? "—";
-    document.getElementById("statPA").textContent       = d.pa_forms ?? "—";
-    document.getElementById("statApproved").textContent = d.approved ?? "—";
-    document.getElementById("statRejected").textContent = d.rejected ?? "—";
-  } catch(e) { console.error(e); }
-}
-
-// ═══════════ USERS ═══════════
+// ═══════════ USERS (also updates statUsers count) ═══════════
 async function loadUsers() {
   const token = localStorage.getItem("token");
   const tbody = document.getElementById("usersTable");
@@ -963,6 +1015,10 @@ async function loadUsers() {
     const res   = await fetch(`${API}/api/admin/users`, { headers:{ Authorization:`Bearer ${token}` } });
     if (!res.ok) { tbody.innerHTML=`<tr><td colspan="4" class="no-data" style="color:#DC2626;">⚠ Failed (${res.status})</td></tr>`; return; }
     const users = await res.json();
+
+    // ── update users count stat card ──
+    document.getElementById("statUsers").textContent = users.length;
+
     if (!users.length) { tbody.innerHTML=`<tr><td colspan="4" class="no-data">No users found.</td></tr>`; return; }
     tbody.innerHTML = "";
     users.forEach(u => {
@@ -981,23 +1037,42 @@ async function loadUsers() {
 async function loadLogs() {
   const token  = localStorage.getItem("token");
   const logBox = document.getElementById("logBox");
+  logBox.innerHTML = `<div class="log-empty">Fetching logs…</div>`;
   try {
-    const res  = await fetch(`${API}/api/analytics/logs`, { headers:{ Authorization:`Bearer ${token}` } });
-    if (!res.ok) { logBox.innerHTML=`<div class="log-empty" style="color:#F87171;">⚠ Failed (${res.status})</div>`; return; }
+    const res = await fetch(`${API}/api/analytics/logs`, {
+      headers:{ Authorization:`Bearer ${token}` }
+    });
+    if (!res.ok) {
+      logBox.innerHTML = `<div class="log-empty" style="color:#F87171;">⚠ Failed (${res.status})</div>`;
+      return;
+    }
     const logs = await res.json();
-    if (!logs.length) { logBox.innerHTML=`<div class="log-empty">No logs yet. Logs appear after login/PA events.</div>`; return; }
+    const list = Array.isArray(logs) ? logs : (logs.logs || logs.data || []);
+
+    if (!list.length) {
+      logBox.innerHTML = `<div class="log-empty">No logs yet. Logs appear after login/PA events.</div>`;
+      return;
+    }
+
     logBox.innerHTML = "";
-    logs.forEach(log => {
+    [...list].reverse().forEach(log => {
+      const time    = log.time || log.created_at || log.timestamp || null;
+      const action  = log.action  || log.event   || "EVENT";
+      const user    = log.user    || log.email    || log.user_email || "";
+      const message = log.message || log.detail   || log.msg || "";
       logBox.innerHTML += `
         <div class="log-line">
-          <span class="log-time">${log.time?new Date(log.time).toLocaleTimeString():"—"}</span>
-          <span class="log-action">${log.action||"EVENT"}</span>
-          <span class="log-user">${log.user||""}</span>
-          <span class="log-msg">${log.message||""}</span>
+          <span class="log-time">${time ? new Date(time).toLocaleTimeString() : "—"}</span>
+          <span class="log-action">${action}</span>
+          <span class="log-user">${user}</span>
+          <span class="log-msg">${message}</span>
         </div>`;
     });
     logBox.scrollTop = logBox.scrollHeight;
-  } catch(e) { logBox.innerHTML=`<div class="log-empty" style="color:#F87171;">⚠ ${e.message}</div>`; }
+  } catch(e) {
+    logBox.innerHTML = `<div class="log-empty" style="color:#F87171;">⚠ ${e.message}</div>`;
+    console.error("LOGS ERROR:", e);
+  }
 }
 
 // ═══════════ SESSIONS ═══════════
@@ -1034,8 +1109,8 @@ async function forceLogout(sessionToken) {
   try {
     const res = await fetch(`${API}/api/auth/sessions/force-logout/${sessionToken}`,
       { method:"POST", headers:{ Authorization:`Bearer ${adminToken}` }});
-    alert(res.ok?"✅ Session terminated.":"⚠ Failed.");
-  } catch(e) { alert("⚠ "+e.message); }
+    showAppMessage(res.ok?"success":"error", res.ok?"Session terminated.":"Failed.");
+  } catch(e) { showError(e.message); }
   loadSessions();
 }
 
@@ -1053,7 +1128,7 @@ async function logout() {
 
 // ═══════════ AUTO REFRESH ═══════════
 setInterval(()=>{ if(currentRole==="admin") loadSessions(); }, 5000);
-setInterval(()=>{ if(currentRole==="admin"){ loadAnalytics(); loadLogs(); } }, 30000);
+setInterval(()=>{ if(currentRole==="admin"){ loadAdminForms(); loadLogs(); loadUsers(); } }, 30000);
 
 window.onload = initDashboard;
 </script>

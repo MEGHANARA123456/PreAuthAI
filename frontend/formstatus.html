@@ -184,7 +184,6 @@ body{margin:0;background:var(--bg);color:var(--text);}
 </div>
 
 <script>
-const API = "http://127.0.0.1:8000";
 
 // ── Get PA ID from URL ──────────────────────────────────────────
 const params = new URLSearchParams(window.location.search);
@@ -300,13 +299,13 @@ async function downloadPDF() {
     const res = await fetch(`${API}/api/pa/${paId}/download`, {
       headers: { "Authorization": "Bearer " + token }
     });
-    if (!res.ok) { alert("PDF not available yet."); return; }
+    if (!res.ok) { showError("PDF not available yet."); return; }
     const blob = await res.blob();
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement("a");
     a.href = url; a.download = `PA_${paId}.pdf`; a.click();
     URL.revokeObjectURL(url);
-  } catch { alert("PDF download failed."); }
+  } catch { showError("PDF download failed."); }
 }
 
 // ── Logout ───────────────────────────────────────────────────────

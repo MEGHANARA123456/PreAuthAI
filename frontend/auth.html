@@ -412,6 +412,11 @@ input::placeholder { color:var(--muted); }
 @media(max-width:400px){
   .row2 { grid-template-columns:1fr; }
 }
+
+/* ─── ERROR MODAL ─── */
+#errorModal[style*="display: flex"] {
+  display: flex !important;
+}
 </style>
 </head>
 <body>
@@ -518,6 +523,9 @@ input::placeholder { color:var(--muted); }
 
         <div class="or">or continue with</div>
         <div id="googleBtn"></div>
+        <div id="googleErrorMsg" style="display:none; font-size:12px; color:var(--muted); text-align:center; margin-top:12px;">
+          Google login not configured. Use email/password to sign in.
+        </div>
 
         <div class="foot">
           New user? <button onclick="switchTab('signup')" type="button">Create an account</button>
@@ -533,39 +541,60 @@ input::placeholder { color:var(--muted); }
         <h2 class="panel-title">Create your account ✨</h2>
         <p class="panel-sub">Register to start submitting prior authorization requests.</p>
 
-        <div class="row2">
+        <!-- Step 1: Account Details -->
+        <div id="signupStep1">
+          <div class="row2">
+            <div class="field">
+              <label class="field-label">First Name</label>
+              <input type="text" id="firstName" placeholder="Jane">
+            </div>
+            <div class="field">
+              <label class="field-label">Last Name</label>
+              <input type="text" id="lastName" placeholder="Doe">
+            </div>
+          </div>
+
           <div class="field">
-            <label class="field-label">First Name</label>
-            <input type="text" id="firstName" placeholder="Jane">
+            <label class="field-label">Email Address</label>
+            <input type="email" id="email" placeholder="you@clinic.com">
           </div>
+
           <div class="field">
-            <label class="field-label">Last Name</label>
-            <input type="text" id="lastName" placeholder="Doe">
+            <label class="field-label">Password</label>
+            <div class="input-wrap">
+              <input type="password" id="pass1" placeholder="Create a strong password">
+              <button class="eye" onclick="toggle('pass1')" type="button">👁</button>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field-label">Confirm Password</label>
+            <div class="input-wrap">
+              <input type="password" id="pass2" placeholder="Repeat your password">
+              <button class="eye" onclick="toggle('pass2')" type="button">👁</button>
+            </div>
+          </div>
+
+          <button class="btn" id="requestOtpBtn" onclick="requestSignupOTP()" type="button">Request OTP →</button>
+          <div class="msg" id="signupMsg"></div>
+        </div>
+
+        <!-- Step 2: OTP Verification -->
+        <div id="signupStep2" style="display:none;">
+          <p style="font-size:13px;color:var(--success);font-weight:600;margin-bottom:20px;">✉ OTP sent to your email! Check your inbox.</p>
+
+          <div class="field">
+            <label class="field-label">One-Time Code (OTP)</label>
+            <input type="text" id="signupOtp" placeholder="6-digit code" maxlength="6">
+          </div>
+
+          <button class="btn" id="verifyOtpBtn" onclick="verifySignupOTP()" type="button">Verify OTP & Create Account →</button>
+          <div class="msg" id="otpVerifyMsg"></div>
+
+          <div style="margin-top:12px; text-align:center;">
+            <button onclick="requestSignupOTP()" type="button" style="background:none;border:none;color:var(--sky);cursor:pointer;font-size:12px;text-decoration:underline;">Resend OTP</button>
           </div>
         </div>
-
-        <div class="field">
-          <label class="field-label">Email Address</label>
-          <input type="email" id="email" placeholder="you@clinic.com">
-        </div>
-
-        <div class="field">
-          <label class="field-label">Password</label>
-          <div class="input-wrap">
-            <input type="password" id="pass1" placeholder="Create a strong password">
-            <button class="eye" onclick="toggle('pass1')" type="button">👁</button>
-          </div>
-        </div>
-
-        <div class="field">
-          <label class="field-label">Confirm Password</label>
-          <div class="input-wrap">
-            <input type="password" id="pass2" placeholder="Repeat your password">
-            <button class="eye" onclick="toggle('pass2')" type="button">👁</button>
-          </div>
-        </div>
-
-        <button class="btn" onclick="signup()" type="button">Create Account →</button>
 
         <div class="foot">
           Already registered? <button onclick="switchTab('login')" type="button">Sign in</button>
@@ -630,10 +659,31 @@ input::placeholder { color:var(--muted); }
 
 </div>
 
+<!-- ════════ ERROR MODAL ════════ -->
+<div id="errorModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:1000; align-items:center; justify-content:center;">
+  <div style="background:var(--card-deep); border:1px solid var(--border); border-radius:var(--radius); padding:32px; max-width:420px; box-shadow:0 20px 60px rgba(0,0,0,0.5);">
+    <div style="font-size:28px; margin-bottom:12px;">❌</div>
+    <h3 style="font-size:16px; font-weight:700; margin-bottom:12px; color:var(--text);" id="errorTitle">Error</h3>
+    <p style="font-size:14px; color:var(--text-soft); margin-bottom:24px; line-height:1.5;" id="errorMessage">Something went wrong</p>
+    <button onclick="closeErrorModal()" style="width:100%; padding:12px; background:var(--card); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text); font-weight:600; cursor:pointer;">OK</button>
+  </div>
+</div>
+
 <!-- ════════════════════════════
      JAVASCRIPT — ALL LOGIC
 ════════════════════════════ -->
 <script>
+
+/* ── ERROR MODAL ── */
+function showErrorModal(title, message) {
+  document.getElementById('errorTitle').textContent = title || 'Error';
+  document.getElementById('errorMessage').textContent = message || 'Something went wrong';
+  document.getElementById('errorModal').style.display = 'flex';
+}
+
+function closeErrorModal() {
+  document.getElementById('errorModal').style.display = 'none';
+}
 
 /* ── TAB SWITCHER ── */
 function switchTab(tab) {
@@ -644,6 +694,20 @@ function switchTab(tab) {
   document.getElementById('loginBox').classList.toggle('on',  tab==='login');
   document.getElementById('signupBox').classList.toggle('on', tab==='signup');
   document.getElementById('resetBox').classList.remove('on');
+  
+  // Reset signup to step 1 when switching to signup tab
+  if (tab === 'signup') {
+    document.getElementById('signupStep1').style.display = 'block';
+    document.getElementById('signupStep2').style.display = 'none';
+    ['firstName','lastName','email','pass1','pass2','signupOtp'].forEach(id => 
+      document.getElementById(id).value = ''
+    );
+    ['signupMsg','otpVerifyMsg'].forEach(id => { 
+      const el = document.getElementById(id); 
+      el.className = 'msg'; 
+      el.textContent = ''; 
+    });
+  }
 }
 
 /* ── SHOW RESET ── */
@@ -672,42 +736,138 @@ function toggle(id) {
 async function login() {
   const identifier = document.getElementById('loginUser').value.trim();
   const password   = document.getElementById('loginPass').value;
-  if (!identifier || !password) { alert('Enter email/username and password'); return; }
+  if (!identifier || !password) { 
+    showErrorModal('Missing Information', 'Please enter your email/username and password'); 
+    return; 
+  }
   try {
     const fd = new URLSearchParams();
-    fd.append('username', identifier); fd.append('password', password);
-    const res  = await fetch('http://127.0.0.1:8000/api/auth/login', {
-      method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:fd
+    fd.append('username', identifier); 
+    fd.append('password', password);
+    const res  = await fetch('http://127.0.0.1:8001/api/auth/login', {
+      method:'POST', 
+      headers:{'Content-Type':'application/x-www-form-urlencoded'}, 
+      body:fd
     });
     const data = await res.json();
-    if (!res.ok) { alert('❌ '+(data.detail||data.message||'Login failed')); return; }
-    if (!data.access_token) { alert('❌ Login failed: No token received'); return; }
+    if (!res.ok) { 
+      const errorMsg = data.detail || data.message || 'Login failed';
+      showErrorModal('Login Failed', errorMsg); 
+      return; 
+    }
+    if (!data.access_token) { 
+      showErrorModal('Login Failed', 'No token received from server'); 
+      return; 
+    }
     localStorage.setItem('token', data.access_token);
     window.location.href = '/frontend/dashboard.html';
-  } catch(e) { console.error(e); alert('❌ Cannot connect to server'); }
+  } catch(e) { 
+    console.error(e); 
+    showErrorModal('Connection Error', 'Cannot connect to server'); 
+  }
 }
 
-/* ── SIGNUP ── */
-async function signup() {
+/* ── SIGNUP - REQUEST OTP ── */
+async function requestSignupOTP() {
   const first    = document.getElementById('firstName').value.trim();
   const last     = document.getElementById('lastName').value.trim();
-  const fullname = (first+' '+last).trim();
+  const fullname = (first + ' ' + last).trim();
   const email    = document.getElementById('email').value.trim();
   const password = document.getElementById('pass1').value;
   const confirm  = document.getElementById('pass2').value;
-  if (!first||!last||!email||!password||!confirm) { alert('Please fill all fields'); return; }
-  if (password !== confirm) { alert('Passwords do not match'); return; }
+  const btn      = document.getElementById('requestOtpBtn');
+  const msg      = document.getElementById('signupMsg');
+  
+  msg.className = 'msg'; 
+  msg.textContent = '';
+  
+  if (!first || !last || !email || !password || !confirm) { 
+    msg.className = 'msg err'; 
+    msg.textContent = '❌ Please fill in all fields'; 
+    return; 
+  }
+  
+  if (password !== confirm) { 
+    msg.className = 'msg err'; 
+    msg.textContent = '❌ Passwords do not match'; 
+    return; 
+  }
+  
+  btn.disabled = true; 
+  btn.textContent = 'Sending OTP…';
+  
   try {
-    const res  = await fetch('http://127.0.0.1:8000/api/auth/signup', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ username:email, email, fullname, password })
+    const res = await fetch('http://127.0.0.1:8001/api/auth/request-signup-otp', {
+      method: 'POST', 
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ username: email, email, fullname, password })
     });
     const data = await res.json();
+    
     if (res.ok) {
-      alert('✅ '+(data.message||'Account created!')+'\nRole: '+(data.assigned_role||'user'));
-      switchTab('login');
-    } else { alert('❌ '+(data.detail||data.message||'Signup failed')); }
-  } catch(e) { console.error(e); alert('❌ Cannot connect to server'); }
+      msg.className = 'msg ok'; 
+      msg.textContent = '✅ OTP sent! Check your email.';
+      document.getElementById('signupStep1').style.display = 'none';
+      document.getElementById('signupStep2').style.display = 'block';
+    } else { 
+      const errorMsg = data.detail || data.message || 'Failed to send OTP';
+      msg.className = 'msg err'; 
+      msg.textContent = '❌ ' + errorMsg;
+    }
+  } catch(e) { 
+    console.error(e); 
+    msg.className = 'msg err'; 
+    msg.textContent = '❌ Cannot connect to server'; 
+  } finally { 
+    btn.disabled = false; 
+    btn.textContent = 'Request OTP →'; 
+  }
+}
+
+/* ── SIGNUP - VERIFY OTP ── */
+async function verifySignupOTP() {
+  const email = document.getElementById('email').value.trim();
+  const otp   = document.getElementById('signupOtp').value.trim();
+  const btn   = document.getElementById('verifyOtpBtn');
+  const msg   = document.getElementById('otpVerifyMsg');
+  
+  msg.className = 'msg'; 
+  msg.textContent = '';
+  
+  if (!otp || otp.length !== 6) { 
+    msg.className = 'msg err'; 
+    msg.textContent = '❌ Please enter a valid 6-digit OTP'; 
+    return; 
+  }
+  
+  btn.disabled = true; 
+  btn.textContent = 'Verifying…';
+  
+  try {
+    const res = await fetch('http://127.0.0.1:8001/api/auth/verify-signup-otp', {
+      method: 'POST', 
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ email, otp })
+    });
+    const data = await res.json();
+    
+    if (res.ok) {
+      msg.className = 'msg ok'; 
+      msg.textContent = '✅ Account created! Redirecting to login…';
+      setTimeout(() => switchTab('login'), 1500);
+    } else { 
+      const errorMsg = data.detail || data.message || 'OTP verification failed';
+      msg.className = 'msg err'; 
+      msg.textContent = '❌ ' + errorMsg;
+    }
+  } catch(e) { 
+    console.error(e); 
+    msg.className = 'msg err'; 
+    msg.textContent = '❌ Cannot connect to server'; 
+  } finally { 
+    btn.disabled = false; 
+    btn.textContent = 'Verify OTP & Create Account →'; 
+  }
 }
 
 /* ── SEND OTP ── */
@@ -719,7 +879,7 @@ async function sendReset() {
   if (!email) { msg.className='msg err'; msg.textContent='❌ Please enter your email.'; return; }
   btn.disabled=true; btn.textContent='Sending…';
   try {
-    const res  = await fetch('http://127.0.0.1:8000/api/auth/forgot-password', {
+    const res  = await fetch('http://127.0.0.1:8001/api/auth/forgot-password', {
       method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email})
     });
     const data = await res.json();
@@ -727,7 +887,11 @@ async function sendReset() {
       msg.className='msg ok'; msg.textContent='✅ '+(data.message||'OTP sent! Check your email.');
       document.getElementById('otpSection').classList.add('show');
       document.getElementById('resetStep1').style.display='none';
-    } else { msg.className='msg err'; msg.textContent='❌ '+(data.detail||data.message||'Failed to send OTP'); }
+    } else { 
+      const errorMsg = data.detail || data.message || 'Failed to send OTP';
+      msg.className='msg err'; 
+      msg.textContent='❌ ' + errorMsg; 
+    }
   } catch(e) { msg.className='msg err'; msg.textContent='❌ Cannot connect to server.'; }
   finally    { btn.disabled=false; btn.textContent='Send OTP →'; }
 }
@@ -745,7 +909,7 @@ async function confirmReset() {
   if (newPass!==confPass)        { msg.className='msg err'; msg.textContent='⚠ Passwords do not match.'; return; }
   btn.disabled=true; btn.textContent='Resetting…';
   try {
-    const res  = await fetch('http://127.0.0.1:8000/api/auth/reset-password', {
+    const res  = await fetch('http://127.0.0.1:8001/api/auth/reset-password', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({email, otp, new_password:newPass})
     });
@@ -753,46 +917,98 @@ async function confirmReset() {
     if (res.ok) {
       msg.className='msg ok'; msg.textContent='✅ Password reset! Redirecting to login…';
       setTimeout(()=>showLogin(), 1500);
-    } else { msg.className='msg err'; msg.textContent='❌ '+(data.detail||data.message||'Reset failed. Check your OTP.'); }
+    } else { 
+      const errorMsg = data.detail || data.message || 'Reset failed. Check your OTP.';
+      msg.className='msg err'; 
+      msg.textContent='❌ ' + errorMsg; 
+    }
   } catch(e) { msg.className='msg err'; msg.textContent='❌ Cannot connect to server.'; }
   finally    { btn.disabled=false; btn.textContent='Reset Password →'; }
 }
 
 /* ── GOOGLE LOGIN ── */
 async function handleGoogleLogin(response) {
-  if (!response||!response.credential) { alert('Google authentication failed'); return; }
+  if (!response||!response.credential) { 
+    showErrorModal('Authentication Failed', 'Google authentication failed'); 
+    return; 
+  }
   try {
-    const res  = await fetch('http://127.0.0.1:8000/api/auth/google-login', {
+    const res  = await fetch('http://127.0.0.1:8001/api/auth/google-login', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({token:response.credential})
     });
     let data=null;
-    try { data=await res.json(); } catch(e) { alert('Invalid server response'); return; }
-    if (!res.ok)            { alert(data.detail||data.message||'Google login failed'); return; }
-    if (!data.access_token) { alert('Login failed: token missing'); return; }
+    try { data=await res.json(); } catch(e) { 
+      showErrorModal('Server Error', 'Invalid server response'); 
+      return; 
+    }
+    if (!res.ok) {
+      const errorMsg = data.detail || data.message || 'Google login failed';
+      showErrorModal('Login Failed', errorMsg); 
+      return; 
+    }
+    if (!data.access_token) { 
+      showErrorModal('Login Failed', 'Token missing from response'); 
+      return; 
+    }
     localStorage.setItem('token', data.access_token);
     window.location.href = '/frontend/dashboard.html';
-  } catch(e) { console.error(e); alert('Cannot connect to backend server'); }
+  } catch(e) { console.error(e); showErrorModal('Connection Error', 'Cannot connect to backend server'); }
 }
 
 /* ── GOOGLE SSO LOADER ── */
 async function loadGoogleSSO() {
   try {
-    const res  = await fetch('http://127.0.0.1:8000/api/auth/google-client');
-    if (!res||!res.ok) return;
+    const res  = await fetch('http://127.0.0.1:8001/api/auth/google-client');
+    if (!res||!res.ok) {
+      console.warn('Google client endpoint error:', res?.status);
+      document.getElementById('googleErrorMsg').style.display = 'block';
+      return;
+    }
     const data = await res.json();
-    if (!data||!data.client_id) return;
-    google.accounts.id.initialize({
-      client_id: data.client_id,
-      callback: handleGoogleLogin,
-      auto_select: false,
-      cancel_on_tap_outside: true
-    });
-    google.accounts.id.renderButton(
-      document.getElementById('googleBtn'),
-      { theme:'outline', size:'large', width:380 }
-    );
-  } catch(e) { console.error('Google SSO load error:', e); }
+    if (!data||!data.client_id) {
+      console.warn('No client ID received from backend');
+      document.getElementById('googleErrorMsg').style.display = 'block';
+      return;
+    }
+    
+    // Check if Google API is loaded
+    if (!window.google || !window.google.accounts) {
+      console.warn('Google Accounts API not loaded');
+      document.getElementById('googleErrorMsg').style.display = 'block';
+      return;
+    }
+    
+    try {
+      google.accounts.id.initialize({
+        client_id: data.client_id,
+        callback: handleGoogleLogin,
+        auto_select: false,
+        cancel_on_tap_outside: true
+      });
+      
+      // Try to render button
+      const googleBtn = document.getElementById('googleBtn');
+      if (!googleBtn) {
+        console.warn('googleBtn container not found');
+        return;
+      }
+      
+      google.accounts.id.renderButton(googleBtn, { theme:'outline', size:'large', width:380 });
+      
+      // If we got here, button rendered successfully
+      document.getElementById('googleErrorMsg').style.display = 'none';
+    } catch(renderError) {
+      console.error('Error rendering Google button:', renderError);
+      console.log('Possible cause: Origin not whitelisted in Google Cloud Console');
+      console.log('See GOOGLE_OAUTH_SETUP.md for fix');
+      document.getElementById('googleBtn').style.display = 'none';
+      document.getElementById('googleErrorMsg').style.display = 'block';
+    }
+  } catch(e) { 
+    console.error('Google SSO load error:', e);
+    document.getElementById('googleErrorMsg').style.display = 'block';
+  }
 }
 
 /* ── INIT ── */
@@ -801,7 +1017,7 @@ window.addEventListener('load', async () => {
     const token = localStorage.getItem('token');
     if (!token) { loadGoogleSSO(); return; }
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/auth/me', {
+      const res = await fetch('http://127.0.0.1:8001/api/auth/me', {
         headers: { Authorization:'Bearer '+token }
       });
       if (res.ok) { window.location.href='/frontend/dashboard.html'; }

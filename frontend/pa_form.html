@@ -331,9 +331,66 @@ canvas {
 </div><!-- end page -->
 
 <script>
-const API = "http://127.0.0.1:8000";
+const API = "http://127.0.0.1:8001/api";
 
-// ── Helper: extract readable error ──────────────────────────────
+function ensureMessageStyles() {
+    if (document.getElementById("appMessageStyles")) return;
+    const style = document.createElement("style");
+    style.id = "appMessageStyles";
+    style.textContent = `
+      .app-message-wrapper{position:fixed;top:20px;right:20px;z-index:99999;display:flex;flex-direction:column;gap:12px;width:min(360px,calc(100vw - 32px));pointer-events:none;}
+      .app-message{pointer-events:auto;border-radius:14px;padding:14px 16px;min-width:0;box-shadow:0 20px 40px rgba(0,0,0,.14);color:#fff;font-size:13px;line-height:1.5;opacity:0;transform:translateY(-10px);transition:opacity .22s ease,transform .22s ease;cursor:pointer;}
+      .app-message.show{opacity:1;transform:translateY(0);}
+      .app-message.info{background:linear-gradient(135deg,#1A73E8,#4C8CFA);}
+      .app-message.success{background:linear-gradient(135deg,#16A34A,#34D399);}
+      .app-message.warning{background:linear-gradient(135deg,#F59E0B,#FBBF24);color:#1E2937;}
+      .app-message.error{background:linear-gradient(135deg,#DC2626,#F87171);}
+      .app-message .title{font-weight:700;margin-bottom:4px;}
+    `;
+    document.head.appendChild(style);
+}
+
+function getMessageContainer() {
+    let container = document.getElementById("appMessageContainer");
+    if (!container) {
+        container = document.createElement("div");
+        container.id = "appMessageContainer";
+        container.className = "app-message-wrapper";
+        document.body.appendChild(container);
+    }
+    return container;
+}
+
+function showAppMessage(type, message, duration = 5000) {
+    ensureMessageStyles();
+    const container = getMessageContainer();
+    const toast = document.createElement("div");
+    toast.className = `app-message ${type || "info"}`;
+    const title = type === "success" ? "Success" : type === "error" ? "Error" : type === "warning" ? "Warning" : "Info";
+    toast.innerHTML = `
+      <div class="title">${title}</div>
+      <div>${message}</div>
+    `;
+    container.prepend(toast);
+    requestAnimationFrame(() => toast.classList.add("show"));
+    const timeout = setTimeout(() => {
+        toast.classList.remove("show");
+        toast.addEventListener("transitionend", () => toast.remove(), { once: true });
+    }, duration);
+    toast.addEventListener("click", () => {
+        clearTimeout(timeout);
+        toast.classList.remove("show");
+        toast.addEventListener("transitionend", () => toast.remove(), { once: true });
+    });
+    return toast;
+}
+
+function showSuccess(message, duration) { return showAppMessage("success", message, duration); }
+function showError(message, duration) { return showAppMessage("error", message, duration); }
+function showWarning(message, duration) { return showAppMessage("warning", message, duration); }
+function showInfo(message, duration) { return showAppMessage("info", message, duration); }
+
+// ── Helper ──────────────────────────────────────────────────────
 function extractError(data) {
     if (!data) return "Unknown error";
     if (Array.isArray(data.detail))
@@ -343,12 +400,10 @@ function extractError(data) {
     return JSON.stringify(data);
 }
 
-// ── Toggle sections ──────────────────────────────────────────────
 function toggle(header) {
     header.nextElementSibling.classList.toggle("hidden");
 }
 
-// ── Banner ───────────────────────────────────────────────────────
 function setBanner(type, msg) {
     const b = document.getElementById("aiBanner");
     b.className = type;
@@ -356,14 +411,56 @@ function setBanner(type, msg) {
     b.textContent = msg;
 }
 
-// ── Fill field + green highlight ─────────────────────────────────
+// ── SINGLE fill() definition ─────────────────────────────────────
 function fill(id, value) {
-    if (!value) return;
+    if (!value || value === "null" || value === "undefined") return;
     const el = document.getElementById(id);
     if (!el) return;
+
+    // Prevent numeric codes from filling into medication field
+    if (id === "medication" && /^\d+$/.test(value)) {
+        console.warn(`[warn] Skipping numeric code "${value}" for medication field`);
+        return;
+    }
+
+    // Convert date formats to YYYY-MM-DD
+    if (el.type === "date") {
+        // Try MM/DD/YYYY format
+        const mmddyyyy = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+        if (mmddyyyy) value = `${mmddyyyy[3]}-${mmddyyyy[1]}-${mmddyyyy[2]}`;
+        
+        // Try DD/MM/YYYY or DD-MM-YYYY or D-M-YYYY format (common in clinical notes)
+        const ddmmyyyy = value.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})$/);
+        if (ddmmyyyy) {
+            const day = ddmmyyyy[1].padStart(2, "0");
+            const month = ddmmyyyy[2].padStart(2, "0");
+            const year = ddmmyyyy[3];
+            // Assume DD-MM-YYYY if day > 12, otherwise assume MM-DD-YYYY
+            if (parseInt(day) > 12) {
+                value = `${year}-${month}-${day}`;
+            } else if (parseInt(month) > 12) {
+                value = `${year}-${day}-${month}`;
+            } else {
+                value = `${year}-${month}-${day}`;
+            }
+        }
+        
+        // Try M/D/YYYY or D/M/YYYY format
+        const mdyyyy = value.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+        if (mdyyyy) value = `${mdyyyy[3]}-${mdyyyy[1].padStart(2,"0")}-${mdyyyy[2].padStart(2,"0")}`;
+    }
+
     el.value = value;
     el.classList.add("ai-filled");
     setTimeout(() => el.classList.remove("ai-filled"), 4000);
+}
+
+function fillRadio(name, value) {
+    if (!value) return;
+    const v = value.toLowerCase();
+    document.querySelectorAll(`input[name='${name}']`).forEach(r => {
+        if (r.value.toLowerCase() === v) { r.checked = true; }
+    });
 }
 
 // ── AI AUTO-FILL ─────────────────────────────────────────────────
@@ -389,7 +486,7 @@ async function autoFillFromLLM() {
     setBanner("loading", "🤖 AI is extracting fields… please wait.");
 
     try {
-        const res = await fetch(`${API}/api/notes/analyze`, {
+        const res = await fetch(`${API}/notes/analyze`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -399,89 +496,67 @@ async function autoFillFromLLM() {
         });
 
         const data = await res.json();
-        console.log("AI Response:", data);
+        console.log("AI Response:", JSON.stringify(data, null, 2)); // full debug
 
         if (!res.ok) {
             setBanner("error", "⚠ " + extractError(data));
             return;
         }
 
-        // ── Medical fields ────────────────────────────────────────
-        fill("medication",    data.medication    || data.drug_name  || data.procedure || "");
-        fill("diagnosis",     data.diagnosis     || data.icd10      || "");
-        fill("frequency",     data.frequency     || data.dosing     || "");
-        fill("cpt",           data.cpt           || data.cpt_code   || "");
-        fill("strength",      data.strength      || data.route      || "");
-        fill("therapyLength", data.therapy_length|| data.duration   || "");
-        fill("quantity",      data.quantity      || "");
-
-        // ── Clinical necessity ────────────────────────────────────
-        fill("history",       data.history       || data.medical_necessity || data.clinical_history || "");
-        fill("failed",        data.failed        || data.failed_treatments || data.prior_treatments || "");
-
         // ── Patient info ──────────────────────────────────────────
-        fill("fname",        data.patient_first_name || "");
-        fill("lname",        data.patient_last_name  || "");
-        fill("allergies",    data.allergies          || data.drug_allergies || "");
-        fill("heightWeight", data.height_weight      || "");
-        fill("pemail",       data.patient_email      || "");
-        fill("phone",        data.patient_phone      || "");
-        fill("memberId",     data.member_id          || "");
-
-        // ── Address ───────────────────────────────────────────────
-        fill("addr1",        data.address            || "");
-        fill("city",         data.city               || "");
-        fill("state",        data.state              || "");
-        fill("zip",          data.zip                || "");
-
-        // ── Sex radio ────────────────────────────────────────────
-        if (data.sex || data.gender) {
-            const sv = (data.sex || data.gender || "").toLowerCase();
-            document.querySelectorAll("input[name='sex']").forEach(r => {
-                if (r.value.toLowerCase() === sv ||
-                    (sv.includes("female") && r.value === "Female") ||
-                    (sv.includes("male")   && r.value === "Male")) {
-                    r.checked = true;
-                }
-            });
-        }
+        fill("fname",       data.patient_first_name || data.first_name   || data.firstName || data.pat_fname || "");
+        fill("lname",       data.patient_last_name  || data.last_name    || data.lastName || data.pat_lname || "");
+        fill("dob",         data.patient_dob        || data.dob          || data.date_of_birth || data.dateOfBirth || "");
+        fill("phone",       data.patient_phone      || data.phone        || data.patient_tel || data.phone_number || "");
+        fill("pemail",      data.patient_email      || data.email        || data.patient_mail || "");
+        fill("memberId",    data.member_id          || data.member_id    || data.member_number || data.policy_id || "");
+        fill("addr1",       data.patient_address    || data.address      || data.street_address || data.addr || "");
+        fill("city",        data.city               || data.patient_city || "");
+        fill("state",       data.state              || data.patient_state || data.state_prov || "");
+        fill("zip",         data.zip                || data.postal_code  || data.zipcode || data.patient_zip || "");
+        fillRadio("sex",    data.patient_sex        || data.sex          || data.gender || data.patient_gender || "");
 
         // ── Prescriber info ───────────────────────────────────────
-        fill("prescriberFname", data.prescriber_first || "");
-        fill("prescriberLname", data.prescriber_last  || "");
-        fill("npi",             data.npi              || data.npi_number || "");
-        fill("officePhone",     data.office_phone     || "");
-        fill("officeFax",       data.office_fax       || "");
+        fill("prescriberFname", data.prescriber_first || data.prescriber_first_name || data.provider_first || data.doc_fname || "");
+        fill("prescriberLname", data.prescriber_last  || data.prescriber_last_name  || data.provider_last || data.doc_lname || "");
+        fill("npi",             data.npi              || data.npi_number             || data.provider_npi || "");
+        fill("officePhone",     data.office_phone     || data.office_tel || data.provider_phone || "");
+        fill("officeFax",       data.office_fax       || data.office_fax_number || data.provider_fax || "");
 
-        // ── Urgency radio ─────────────────────────────────────────
-        if (data.urgency) {
-            const uv = data.urgency.toLowerCase();
-            document.querySelectorAll("input[name='urgency']").forEach(r => {
-                if (r.value.toLowerCase() === uv ||
-                    (uv.includes("urgent") && r.value === "Urgent")) {
-                    r.checked = true;
-                }
-            });
-        }
+        // ── Medical info ──────────────────────────────────────────
+        fill("medication",    data.medication     || data.drug_name    || data.procedure    || data.med_name || data.medication_name || "");
+        fill("strength",      data.strength       || data.route        || data.dosage       || data.strength_dose || "");
+        fill("frequency",     data.frequency      || data.dosing       || data.frequency_dose || "");
+        fill("startDate",     data.start_date     || data.start_date_formatted || data.date_start || "");
+        fill("therapyLength", data.therapy_length || data.duration     || data.length       || data.duration_therapy || "");
+        fill("quantity",      data.quantity       || data.qty          || data.amount || "");
+        fill("heightWeight",  data.height_weight  || data.height_weight|| data.ht_wt || "");
+        fill("allergies",     data.allergies      || data.drug_allergies|| data.allergy || "");
+        fill("diagnosis",     data.diagnosis      || data.icd10        || data.icd_10       || data.diagnostic_code || "");
+        fill("cpt",           data.cpt            || data.cpt_code     || data.hcpcs        || data.procedure_code || "");
+        fillRadio("newrx",    data.new_prescription|| data.is_new || "");
+
+        // ── Clinical necessity ────────────────────────────────────
+        fill("history",         data.history       || data.medical_necessity || data.clinical_history || "");
+        fill("failed",          data.failed        || data.failed_treatments || data.prior_treatments  || "");
+        fill("rationaleDetail", data.rationale     || data.rationale_detail  || "");
+        fillRadio("urgency",    data.urgency        || "Standard");
 
         // ── Rationale checkboxes ──────────────────────────────────
         if (data.reasons) {
             const reasons = data.reasons.toLowerCase();
             document.querySelectorAll("input[name='reason']").forEach(cb => {
-                if (reasons.includes(cb.value.toLowerCase())) {
-                    cb.checked = true;
-                }
+                if (reasons.includes(cb.value.toLowerCase())) cb.checked = true;
             });
         }
-        fill("rationaleDetail", data.rationale || "");
 
-        // Count filled
+        // Count filled fields
         const filledCount = document.querySelectorAll(".ai-filled").length;
-        setBanner("success", `✅ AI auto-fill complete! ${filledCount} fields filled. Green fields were auto-filled — review before submitting.`);
+        setBanner("success", ` AI auto-fill complete! ${filledCount} fields filled. Green fields were auto-filled — review before submitting.`);
 
     } catch (error) {
         console.error("AI Error:", error);
-        setBanner("error", "⚠ Cannot connect to AI server. Is the backend running?");
+        setBanner("error", "⚠ Cannot connect to  service. Try again later.");
     } finally {
         btn.disabled = false;
         btn.textContent = "✨ Auto-Fill Using AI";
@@ -497,7 +572,7 @@ async function submitForm() {
     const diagnosis  = document.getElementById("diagnosis").value.trim();
 
     if (!medication || !diagnosis) {
-        alert("⚠ Medication and Diagnosis are required.");
+        showWarning("Medication and diagnosis are required.");
         return;
     }
 
@@ -505,24 +580,19 @@ async function submitForm() {
     btn.disabled = true;
     btn.textContent = "⏳ Submitting…";
 
-    // ── Collect all reasons checked ───────────────────────────────
     const reasons = [...document.querySelectorAll("input[name='reason']:checked")]
         .map(cb => cb.value).join(", ");
 
-    // ── Build full payload ────────────────────────────────────────
     const formData = {
-        // Core fields (backend required)
-        medication:   medication,
-        diagnosis:    diagnosis,
-        history:      document.getElementById("history").value.trim(),
-        frequency:    document.getElementById("frequency").value.trim(),
-        cpt:          document.getElementById("cpt").value.trim(),
-        failed:       document.getElementById("failed").value.trim(),
-        created_at:   new Date().toISOString(),
-        // Legacy compat
+        medication,
+        diagnosis,
+        history:           document.getElementById("history").value.trim(),
+        frequency:         document.getElementById("frequency").value.trim(),
+        cpt:               document.getElementById("cpt").value.trim(),
+        failed:            document.getElementById("failed").value.trim(),
+        created_at:        new Date().toISOString(),
         procedure:         medication,
         medical_necessity: document.getElementById("history").value.trim(),
-        // Extended medication
         strength:          document.getElementById("strength").value.trim(),
         therapy_length:    document.getElementById("therapyLength").value.trim(),
         quantity:          document.getElementById("quantity").value.trim(),
@@ -531,9 +601,8 @@ async function submitForm() {
         urgency:           document.querySelector("input[name='urgency']:checked")?.value || "Standard",
         new_prescription:  document.querySelector("input[name='newrx']:checked")?.value || "",
         start_date:        document.getElementById("startDate").value,
-        reasons:           reasons,
+        reasons,
         rationale_detail:  document.getElementById("rationaleDetail").value.trim(),
-        // Patient info
         patient_first_name: document.getElementById("fname").value.trim(),
         patient_last_name:  document.getElementById("lname").value.trim(),
         patient_dob:        document.getElementById("dob").value,
@@ -548,7 +617,6 @@ async function submitForm() {
             document.getElementById("zip").value.trim()
         ].filter(Boolean).join(", "),
         member_id:          document.getElementById("memberId").value.trim(),
-        // Prescriber info
         prescriber_first:   document.getElementById("prescriberFname").value.trim(),
         prescriber_last:    document.getElementById("prescriberLname").value.trim(),
         npi:                document.getElementById("npi").value.trim(),
@@ -557,7 +625,7 @@ async function submitForm() {
     };
 
     try {
-        const res = await fetch(`${API}/api/pa/save`, {
+        const res = await fetch(`${API}/pa/save`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -567,14 +635,10 @@ async function submitForm() {
         });
 
         const result = await res.json();
-
-        if (!res.ok) {
-            alert("❌ " + extractError(result));
-            return;
-        }
+        if (!res.ok) { showError(extractError(result)); return; }
 
         const paId = result.pa_id || null;
-        alert("✅ PA Submitted Successfully!" + (paId ? "\nPA ID: " + paId : ""));
+        showSuccess("PA submitted successfully!" + (paId ? ` PA ID: ${paId}` : ""));
 
         if (paId && confirm("View your PA status now?")) {
             window.location.href = `pa_status.html?id=${paId}`;
@@ -584,7 +648,7 @@ async function submitForm() {
 
     } catch (error) {
         console.error("Submit Error:", error);
-        alert("⚠ Submission failed. Check your connection.");
+        showError("Submission failed. Check your connection.");
     } finally {
         btn.disabled = false;
         btn.textContent = "📤 Submit PA Request";
@@ -600,7 +664,7 @@ function goBack() {
 function logoutAndGo() {
     const token = localStorage.getItem("token");
     if (token) {
-        fetch(`${API}/api/auth/logout`, {
+        fetch(`${API}/auth/logout`, {
             method: "POST",
             headers: { Authorization: "Bearer " + token }
         }).catch(() => {});
@@ -629,9 +693,9 @@ document.getElementById("fileInput").addEventListener("change", function() {
 });
 
 // ── SIGNATURE ────────────────────────────────────────────────────
-const canvas  = document.getElementById("sig");
-const ctx     = canvas.getContext("2d");
-let drawing   = false;
+const canvas = document.getElementById("sig");
+const ctx    = canvas.getContext("2d");
+let drawing  = false;
 
 canvas.addEventListener("mousedown", e => { drawing=true; ctx.beginPath(); ctx.moveTo(e.offsetX,e.offsetY); });
 canvas.addEventListener("mouseup",   () => { drawing=false; });
@@ -641,8 +705,6 @@ canvas.addEventListener("mousemove", e => {
     ctx.lineWidth=2; ctx.lineCap="round"; ctx.strokeStyle="#0F3C88";
     ctx.lineTo(e.offsetX,e.offsetY); ctx.stroke();
 });
-
-// Touch support
 canvas.addEventListener("touchstart", e => {
     e.preventDefault();
     const r=canvas.getBoundingClientRect(), t=e.touches[0];
@@ -656,31 +718,11 @@ canvas.addEventListener("touchmove", e => {
 });
 canvas.addEventListener("touchend", () => { drawing=false; });
 
-function clearSig() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-}
-function fill(id, value) {
-    if (!value) return;
-    const el = document.getElementById(id);
-    if (!el) return;
-
-    // Convert date formats to YYYY-MM-DD for date inputs
-    if (el.type === "date" && value) {
-        // Handle MM/DD/YYYY → YYYY-MM-DD
-        const mmddyyyy = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-        if (mmddyyyy) value = `${mmddyyyy[3]}-${mmddyyyy[1]}-${mmddyyyy[2]}`;
-    }
-
-    el.value = value;
-    el.classList.add("ai-filled");
-    setTimeout(() => el.classList.remove("ai-filled"), 4000);
-}
+function clearSig() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
 
 // ── AUTH GUARD ───────────────────────────────────────────────────
 window.onload = function() {
-    if (!localStorage.getItem("token")) {
-        window.location.href = "auth.html";
-    }
+    if (!localStorage.getItem("token")) window.location.href = "auth.html";
 };
 </script>
 </body>

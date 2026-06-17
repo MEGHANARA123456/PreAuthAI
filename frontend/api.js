@@ -1,5 +1,5 @@
 // ----------- UPDATE THIS WHEN DEPLOYED --------------
-const API = "http://127.0.0.1:8000/api";
+const API = "http://127.0.0.1:8001/api";
 
 async function post(url,body,auth=true){
     return fetch(API+url,{
